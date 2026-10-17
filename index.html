@@ -117,7 +117,6 @@ if ('serviceWorker' in navigator){
   });
 }
 
-var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxp5L0rGdC0ki2M18YjNnylr0aAOXDLCzW5k84fJhT7aCkdlFrPeOY2tH0b75MMjDJh/exec'; // <-- isi dengan URL /exec yang SAMA dengan Kitir Extruder (1 project Apps Script yang sama)
 
 var tfBatchItems = []; // daftar batch EXT yang sedang tampil di dropdown (hasil fetch terakhir)
 
@@ -127,6 +126,8 @@ function tfSetDefaultTanggal(){
   document.getElementById('fTanggal').value = iso;
 }
 tfSetDefaultTanggal();
+
+var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxp5L0rGdC0ki2M18YjNnylr0aAOXDLCzW5k84fJhT7aCkdlFrPeOY2tH0b75MMjDJh/exec'; // <-- isi dengan URL /exec yang SAMA dengan Kitir Extruder (1 project Apps Script yang sama)
 
 function tfJamSekarang(){
   var n = new Date();
