@@ -59,7 +59,7 @@ function tfValidasi(d){if(!d.tanggal)return'Tanggal belum diisi.';if(!d.shift)re
 function tfShareWa(){
   if(!tfLastSaved) return;
   var d=tfLastSaved;
-  var pesan="✅ *NAIK TF - THERMO*\nTanggal: "+d.tanggal+" | Jam: "+d.jam+"\nShift: "+d.shift+" | TF: "+d.tf+"\nCarsheet: "+d.carsheet+"\nUkuran: "+d.ukuran+"\nBerat: "+d.berat+" kg\nExt Line: "+d.ext+" | Op Ext: "+d.namaExt+"\nOp Thermo: "+d.namaThermo;
+  var pesan="✅ *SHEET NAIK THERMO*\nTanggal: "+d.tanggal+" | Jam: "+d.jam+"\nShift: "+d.shift+" | TF: "+d.tf+"\nCarsheet: "+d.carsheet+"\nUkuran: "+d.ukuran+"\nBerat: "+d.berat+" kg\nExt Line: "+d.ext+" | Op Ext: "+d.namaExt+"\nOp Thermo: "+d.namaThermo;
   var urlWa = WA_TARGET_NUMBER ? "https://wa.me/"+WA_TARGET_NUMBER+"?text="+encodeURIComponent(pesan) : "https://wa.me/?text="+encodeURIComponent(pesan);
   window.open(urlWa,"_blank");
 }
