@@ -1,389 +1,133 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHEET naik TF - SCAN & MANUAL</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f6f9;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            max-width: 500px;
-            width: 100%;
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        h2 {
-            margin-top: 0;
-            margin-bottom: 5px;
-            font-size: 1.4rem;
-        }
-        .subtitle {
-            color: #6c757d;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-        }
-        .row-grid {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .field {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            margin-bottom: 15px;
-        }
-        label {
-            font-weight: 700;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            color: #495057;
-            margin-bottom: 5px;
-        }
-        input[type="text"], input[type="date"], select {
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            font-size: 1rem;
-            background-color: #fff;
-        }
-        .search-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .search-row input {
-            flex: 1;
-        }
-        .btn-cam {
-            background-color: #1e293b;
-            border: none;
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn-cari {
-            background-color: #1d4ed8;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-        .detail-box {
-            background-color: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 20px;
-            font-size: 0.95rem;
-        }
-        .detail-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-        }
-        .detail-item:last-child {
-            margin-bottom: 0;
-        }
-        .detail-item span:first-child {
-            color: #4b5563;
-        }
-        .detail-item span:last-child {
-            font-weight: bold;
-        }
-        button.action-btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-bottom: 10px;
-            display: block;
-            text-align: center;
-        }
-        #btnSave {
-            background-color: #1d4ed8;
-            color: white;
-        }
-        #btnwa {
-            background-color: #22c55e;
-            color: white;
-            margin-bottom: 12px;
-        }
-        #btnReset {
-            background-color: #ffffff;
-            color: #6c757d;
-            border: 1px solid #ced4da;
-            margin-bottom: 15px;
-        }
-        #msg {
-            font-weight: bold;
-            margin-top: 10px;
-            font-size: 0.95rem;
-        }
-        .err-text { color: #dc3545; }
-        .suc-text { color: #198754; }
-        #scanModal {
-            display: none;
-            position: fixed;
-            top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.8);
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-        #scanBox {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-    </style>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SHEET naik TF - SCAN & MANUAL</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1D4E89">
+<link rel="icon" href="icon-192.png">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F3F4F6;--card:#FFF;--ink:#14181F;--mute:#5B6472;--line:#E3E6EA;--accent:#1D4E89;--good:#157F3C;--bad:#B91C1C;}
+  *{box-sizing:border-box;} body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);padding:18px;margin:0;}
+  h1{font-size:16px;font-weight:800;margin:0 0 2px;} .sub{font-size:11px;color:var(--mute);margin-bottom:16px;}
+  #formCard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;max-width:420px;}
+  .field{margin-bottom:14px;} .field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--mute);margin-bottom:5px;}
+  .field input,.field select{width:100%;padding:11px 12px;font-size:15px;border:1px solid var(--line);border-radius:7px;background:#fff;}
+  #infoBatch{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:11px 12px;margin-bottom:14px;font-size:12.5px;display:none;}
+  #infoBatch .r{display:flex;justify-content:space-between;padding:3px 0;} #infoBatch .r span:last-child{font-weight:700;font-family:'Roboto Mono',monospace;}
+  #btnSave{width:100%;padding:13px;font-size:14px;font-weight:700;border:none;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer;}
+  #btnSave:disabled{opacity:.6;} #btnWa{display:none;width:100%;padding:12px;font-size:14px;font-weight:800;border:none;border-radius:8px;background:#25D366;color:#fff;cursor:pointer;margin-top:8px;}
+  #msg{font-size:12.5px;margin-top:10px;} #msg.ok{color:var(--good);font-weight:700;} #msg.bad{color:var(--bad);font-weight:700;}
+  #scanModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;padding:16px;}
+  #scanBox{background:#fff;border-radius:12px;padding:12px;max-width:420px;margin:10% auto 0;}
+</style>
 </head>
 <body>
+<h1>SHEET naik TF</h1>
+<div class="sub">Bisa scan barcode, bisa ketik manual kalau barcode sobek</div>
+<div id="formCard">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="field"><label>Tanggal</label><input type="date" id="fTanggal"></div>
+    <div class="field"><label>Shift</label><select id="fShift"><option value="">- pilih -</option><option>1</option><option>2</option><option>3</option></select></div>
+  </div>
 
-<div class="container">
-    <h2>SHEET naik TF</h2>
-    <div class="subtitle">Bisa scan barcode, bisa ketik manual kalau barcode sobek</div>
-
-    <div class="row-grid">
-        <div class="field">
-            <label>Tanggal</label>
-            <input type="date" id="fTanggal">
-        </div>
-        <div class="field">
-            <label>Shift</label>
-            <select id="fShift">
-                <option value="">- pilih -</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-            </select>
-        </div>
+  <div class="field"><label>No. Carsheet (Scan / Manual)</label>
+    <div style="display:flex; gap:6px;">
+      <input type="text" id="fCarsheet" placeholder="scan atau ketik manual" style="flex:1;" onkeydown="if(event.key==='Enter'){tfCariManual();}">
+      <button type="button" onclick="tfBukaScan()" style="padding:11px 12px; background:#111827; color:#fff; border:none; border-radius:7px; font-weight:800;">📷</button>
+      <button type="button" onclick="tfCariManual()" style="padding:11px 14px; background:var(--accent); color:#fff; border:none; border-radius:7px; font-weight:800;">CARI</button>
     </div>
+  </div>
 
-    <div class="field" style="margin-bottom: 5px;">
-        <label>No. Carsheet (Scan / Manual)</label>
-    </div>
-    <div class="search-row">
-        <input type="text" id="fCarsheet" placeholder="Masukkan nomor carsheet">
-        <button type="button" class="btn-cam" onclick="bukaKameraScan()" title="Scan Barcode Kitir">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-        </button>
-        <button type="button" class="btn-cari" onclick="aksiLookupCarsheet()">CARI</button>
-    </div>
+  <div id="infoBatch">
+    <div class="r"><span>TF Tujuan</span><span id="iTf">-</span></div>
+    <div class="r"><span>Ext Asal</span><span id="iExt">-</span></div>
+    <div class="r"><span>Ukuran</span><span id="iUkuran">-</span></div>
+    <div class="r"><span>Berat</span><span id="iBerat">-</span></div>
+    <div class="r"><span>Op Ext</span><span id="iNamaExt">-</span></div>
+    <div class="r"><span>Jam Ext</span><span id="iJam">-</span></div>
+  </div>
 
-    <div class="detail-box">
-        <div class="detail-item"><span>TF Tujuan</span><span id="txtTfTujuan">-</span></div>
-        <div class="detail-item"><span>Ext Asal</span><span id="txtExtAsal">-</span></div>
-        <div class="detail-item"><span>Ukuran</span><span id="txtUkuran">-</span></div>
-        <div class="detail-item"><span>Berat</span><span id="txtBerat">-</span></div>
-        <div class="detail-item"><span>Op Ext</span><span id="txtOpExt">-</span></div>
-        <div class="detail-item"><span>Jam Ext</span><span id="txtJamExt">-</span></div>
-    </div>
-
-    <div class="field">
-        <label>Nama Operator Thermo</label>
-        <input type="text" id="fNamaThermo" placeholder="Masukkan nama thermo">
-    </div>
-
-    <button type="button" id="btnSave" class="action-btn" onclick="tfSimpan()">Simpan</button>
-    <button type="button" id="btnwa" class="action-btn" onclick="tfSharewa()">Share WA</button>
-    <button type="button" id="btnReset" class="action-btn" onclick="kosongkanFormSemua()">Kosongkan Form</button>
-    
-    <div id="msg"></div>
+  <div class="field"><label>Nama Operator Thermo</label><input type="text" id="fNamaThermo" placeholder="Nama Anda"></div>
+  <button id="btnSave" onclick="tfSimpan()">Simpan</button>
+  <button id="btnWa" onclick="tfShareWa()">Share WA</button>
+  <div id="msg"></div>
 </div>
 
-<div id="scanModal">
-    <div id="scanBox">
-        <div style="font-weight:800; text-align:center; margin-bottom:15px;">Scan Barcode Kitir</div>
-        <div id="interactive" class="viewport" style="width:100%; height:250px; background:#eee; margin-bottom:15px;"></div>
-        <button type="button" onclick="tutupKameraScan()" style="padding:10px 20px; border:none; background:#dc3545; color:white; font-weight:bold; border-radius:6px; cursor:pointer;">Tutup Kamera</button>
-    </div>
-</div>
+<div id="scanModal"><div id="scanBox"><div style="font-weight:800;text-align:center;margin-bottom:8px;">Scan Barcode Kitir</div><div id="reader"></div><button onclick="tfTutupScan()" style="width:100%;margin-top:10px;padding:11px;background:#fff;border:1px solid #ccc;border-radius:8px;">Tutup Kamera</button></div></div>
 
 <script>
-    var tfCurrentItem = null, tfLastSaved = null;
-    var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxp5L0rGdC0ki2M18YjNnylr0aAOXDLCzW5k84fJhT7aCkdlFrPeOY2tH0b75MMjDJh/exec'; 
+var tfCurrentItem=null, tfLastSaved=null;
+var WEBAPP_URL='https://script.google.com/macros/s/AKfycbxp5L0rGdC0ki2M18YjNnylr0aAOXDLCzW5k84fJhT7aCkdlFrPeOY2tH0b75MMjDJh/exec';
+function tfSetDefaultTanggal(){var d=new Date();var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');document.getElementById('fTanggal').value=iso;} tfSetDefaultTanggal();
+function tfJamSekarang(){var n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
 
-    window.onload = function() {
-        const hariIni = new Date().toISOString().split('T');
-        document.getElementById('fTanggal').value = hariIni;
-    };
+function tfLookup(carsheet, onSuccess, onError){
+  if(typeof google!=='undefined'&&google.script&&google.script.run){
+    google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).tfLookupByCarsheet(carsheet); return;
+  }
+  fetch(WEBAPP_URL+'?action=lookup&carsheet='+encodeURIComponent(carsheet)).then(r=>r.json()).then(onSuccess).catch(onError);
+}
 
-    function aksiLookupCarsheet() {
-        const carsheetVal = document.getElementById('fCarsheet').value.trim();
-        const msgDiv = document.getElementById('msg');
-        
-        if (!carsheetVal) {
-            msgDiv.innerHTML = '<span class="err-text">Masukkan atau scan nomor carsheet terlebih dahulu!</span>';
-            return;
-        }
+function tfOnFound(it){
+  tfCurrentItem=it;
+  document.getElementById('iTf').textContent=it.tf;
+  document.getElementById('iExt').textContent=it.ext;
+  document.getElementById('iUkuran').textContent=it.ukuran;
+  document.getElementById('iBerat').textContent=it.berat+' kg';
+  document.getElementById('iNamaExt').textContent=it.namaExt;
+  document.getElementById('iJam').textContent=it.jam;
+  document.getElementById('infoBatch').style.display='block';
+  document.getElementById('msg').textContent='Ditemukan: '+it.carsheet; document.getElementById('msg').className='ok';
+}
 
-        msgDiv.innerHTML = '<span>Memeriksa data...</span>';
-        
-        fetch(`${WEBAPP_URL}?action=lookup&carsheet=${encodeURIComponent(carsheetVal)}`, {
-            method: 'GET',
-            mode: 'cors'
-        })
-        .then(response => response.json())
-        .then(res => {
-            console.log("LOOKUP RAW:", res);
-            if (res.ok && res.item) {
-                tfCurrentItem = res.item;
-                
-                document.getElementById('txtTfTujuan').textContent = tfCurrentItem.tf || "-";
-                document.getElementById('txtExtAsal').textContent = tfCurrentItem.ext || "-";
-                document.getElementById('txtUkuran').textContent = tfCurrentItem.ukuran || "-";
-                document.getElementById('txtBerat').textContent = (tfCurrentItem.berat) ? tfCurrentItem.berat + " kg" : "-";
-                document.getElementById('txtOpExt').textContent = tfCurrentItem.namaExt || "-";
-                document.getElementById('txtJamExt').textContent = tfCurrentItem.jam || "-";
-                
-                msgDiv.innerHTML = '<span class="suc-text">Data ditemukan. Silakan isi operator thermo lalu simpan.</span>';
-            } else {
-                kosongkanVisualDetail();
-                msgDiv.innerHTML = `<span class="err-text">${res.error || 'Data tidak ditemukan.'}</span>`;
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            msgDiv.innerHTML = '<span class="err-text">Gagal menghubungi server backend. Periksa koneksi Anda.</span>';
-        });
-    }
+function tfCariManual(){
+  var carsheet=document.getElementById('fCarsheet').value.trim();
+  var msg=document.getElementById('msg');
+  if(!carsheet){ msg.textContent='Isi No. Carsheet dulu'; msg.className='bad'; return; }
+  msg.textContent='Mencari '+carsheet+'...'; msg.className='';
+  tfLookup(carsheet,function(res){
+    if(res&&res.ok){ tfOnFound(res.item); }
+    else{ document.getElementById('infoBatch').style.display='none'; tfCurrentItem=null; msg.textContent=res.error||'Tidak ketemu'; msg.className='bad'; }
+  },function(){ msg.textContent='Gagal lookup'; msg.className='bad'; });
+}
 
-    function tfSimpan() {
-        const msgDiv = document.getElementById('msg');
-        const tanggal = document.getElementById('fTanggal').value;
-        const shift = document.getElementById('fShift').value;
-        const namaThermo = document.getElementById('fNamaThermo').value.trim();
+function tfSimpan(){
+  var tanggal=document.getElementById('fTanggal').value;
+  var shift=document.getElementById('fShift').value;
+  var carsheet=document.getElementById('fCarsheet').value.trim();
+  var namaThermo=document.getElementById('fNamaThermo').value.trim();
+  var msg=document.getElementById('msg');
+  if(!tanggal){msg.textContent='Tanggal belum diisi';msg.className='bad';return;}
+  if(!shift){msg.textContent='Shift belum dipilih';msg.className='bad';return;}
+  if(!carsheet||!tfCurrentItem){msg.textContent='Cari No. Carsheet dulu (scan / CARI)';msg.className='bad';return;}
+  if(!namaThermo){msg.textContent='Nama Thermo belum diisi';msg.className='bad';return;}
+  var data={_app:'tf',tanggal:tanggal,jam:tfJamSekarang(),shift:shift,tf:tfCurrentItem.tf,carsheet:carsheet,ukuran:tfCurrentItem.ukuran,berat:tfCurrentItem.berat,ext:tfCurrentItem.ext,namaExt:tfCurrentItem.namaExt,namaThermo:namaThermo};
+  document.getElementById('btnSave').disabled=true; msg.textContent='Menyimpan...';
+  var kirim = (typeof google!=='undefined'&&google.script&&google.script.run) ? (cb=>google.script.run.withSuccessHandler(cb).tfSimpanData(data)) : (cb=>fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)}).then(r=>r.json()).then(cb));
+  kirim(function(res){
+    document.getElementById('btnSave').disabled=false;
+    if(res&&res.ok){ tfLastSaved=data; msg.textContent='Tersimpan';msg.className='ok'; document.getElementById('btnWa').style.display='block'; tfShareWa(); }
+    else{ msg.textContent='Gagal: '+(res.error||'unknown'); msg.className='bad'; }
+  });
+}
+function tfShareWa(){ if(!tfLastSaved) return; var d=tfLastSaved; var pesan="✅ SHEET NAIK TF\nTanggal: "+d.tanggal+" | Jam: "+d.jam+"\nShift: "+d.shift+" | TF: "+d.tf+"\nCarsheet: "+d.carsheet+"\nUkuran: "+d.ukuran+"\nBerat: "+d.berat+" kg\nExt: "+d.ext+" | Op Ext: "+d.namaExt+"\nOp Thermo: "+d.namaThermo; window.open("https://wa.me/?text="+encodeURIComponent(pesan),"_blank"); }
 
-        if (!tfCurrentItem) {
-            msgDiv.innerHTML = '<span class="err-text">Gagal: Cari nomor carsheet terlebih dahulu sebelum menyimpan!</span>';
-            return;
-        }
-        if (!tanggal || !shift || !namaThermo) {
-            msgDiv.innerHTML = '<span class="err-text">Gagal: Harap isi Tanggal, Shift, dan Nama Operator Thermo!</span>';
-            return;
-        }
-
-        msgDiv.innerHTML = '<span>Sedang memproses penyimpanan data...</span>';
-
-        const payload = {
-            _app: 'tf',
-            tanggal: tanggal,
-            shift: shift,
-            namaThermo: namaThermo,
-            carsheet: tfCurrentItem.carsheet,
-            ukuran: tfCurrentItem.ukuran,
-            berat: tfCurrentItem.berat,
-            jam: tfCurrentItem.jam,
-            ext: tfCurrentItem.ext,
-            namaExt: tfCurrentItem.namaExt,
-            tf: tfCurrentItem.tf
-        };
-
-        fetch(WEBAPP_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
-        })
-        .then(response => response.json())
-        .then(res => {
-            console.log("SIMPAN RAW:", res);
-            if (res.ok) {
-                tfLastSaved = payload; 
-                msgDiv.innerHTML = '<span class="suc-text">Sukses: Data berhasil disimpan ke Google Sheets!</span>';
-                
-                try {
-                    const btnWaEl = document.getElementById("btnwa");
-                    if (btnWaEl) {
-                        btnWaEl.style.display = "block";
-                        btnWaEl.style.backgroundColor = "#22c55e"; 
-                    }
-                } catch(styleErr) {
-                    console.log("Penyesuaian gaya tombol dilewati aman:", styleErr);
-                }
-            } else {
-                msgDiv.innerHTML = `<span class="err-text">${res.error || 'Gagal menyimpan data.'}</span>`;
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            msgDiv.innerHTML = '<span class="err-text">Terjadi kesalahan saat mengirim data ke sistem server.</span>';
-        });
-    }
-
-    function tfSharewa() {
-        const msgDiv = document.getElementById('msg');
-        if (!tfLastSaved) {
-            msgDiv.innerHTML = '<span class="err-text">Belum ada data yang sukses disimpan untuk dibagikan!</span>';
-            return;
-        }
-        
-        const teksWa = `*LAPORAN PRODUK NAIK TF*\n` +
-                       `Tanggal: ${tfLastSaved.tanggal}\n` +
-                       `Shift: ${tfLastSaved.shift}\n` +
-                       `No. Carsheet: ${tfLastSaved.carsheet}\n` +
-                       `Ukuran: ${tfLastSaved.ukuran}\n` +
-                       `Berat: ${tfLastSaved.berat} kg\n` +
-                       `Ext Asal: ${tfLastSaved.ext} (${tfLastSaved.namaExt})\n` +
-                       `TF Tujuan: ${tfLastSaved.tf}\n` +
-                       `Op Thermo: ${tfLastSaved.namaThermo}`;
-                       
-        const urlWa = `https://api.whatsapp.com/send?text=${encodeURIComponent(teksWa)}`;
-        window.open(urlWa, '_blank');
-    }
-
-    function kosongkanFormSemua() {
-        document.getElementById('fCarsheet').value = "";
-        document.getElementById('fNamaThermo').value = "";
-        document.getElementById('fShift').selectedIndex = 0;
-
-        kosongkanVisualDetail();
-        tfCurrentItem = null;
-        document.getElementById('msg').innerHTML = "";
-        
-        console.log("Sistem form dibersihkan menyeluruh tanpa memicu eror.");
-    }
-
-    function kosongkanVisualDetail() {
-        const targetIds = ['txtTfTujuan', 'txtExtAsal', 'txtUkuran', 'txtBerat', 'txtOpExt', 'txtJamExt'];
-        targetIds.forEach(id => {
-            const elemen = document.getElementById(id);
-            if (elemen) elemen.textContent = "-";
-        });
-    }
-
-    function bukaKameraScan() {
-        document.getElementById('scanModal').style.display = 'flex';
-    }
-
-    function tutupKameraScan() {
-        document.getElementById('scanModal').style.display = 'none';
-    }
+var html5QrCode;
+function tfBukaScan(){
+  document.getElementById('scanModal').style.display='block';
+  html5QrCode=new Html5Qrcode("reader");
+  html5QrCode.start({facingMode:"environment"},{fps:10,qrbox:{width:280,height:120}},
+    function(decoded){
+      document.getElementById('fCarsheet').value=decoded; tfTutupScan(); tfCariManual();
+    },function(){}
+  ).catch(e=>{alert('Kamera gagal: '+e);});
+}
+function tfTutupScan(){ document.getElementById('scanModal').style.display='none'; if(html5QrCode){ html5QrCode.stop().then(()=>html5QrCode.clear()).catch(()=>{}); } }
 </script>
-
 </body>
 </html>
