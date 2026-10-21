@@ -55,7 +55,7 @@
   <div class="field"><label>Nama Operator Thermo</label><input type="text" id="fNamaThermo"></div>
 <button id="btnSave" onclick="tfSimpan()">Simpan</button>
 <button id="btnwa" onclick="tfSharewa()">Share WA</button>
-<button id="btnReset" onclick="kosongkanFormSemua()" style="width: 100%; margin-top: 8px; padding: 10px; background-color: #ffffff; color: #6c757d; border: 1px solid #ced4da; border-radius: 4px; font-weight: bold; cursor: pointer;">Kosongkan Form</button>
+<button id="btnReset" onclick="kosongkanFormSemua()" style="width: 100%; margin-top: 8px; padding: 10px; background-color: #ffffff; color: #6c757d; border: 1px solid #ced4da; border-radius: 4px; font-weight: bold; cursor: pointer; display: block;">Kosongkan Form</button>
 <div id="msg"></div>
 
 
@@ -171,6 +171,33 @@ function tfBukaScan(){
   ).catch(e=>{alert('Kamera gagal: '+e);});
 }
 function tfTutupScan(){ document.getElementById('scanModal').style.display='none'; if(html5QrCode){ html5QrCode.stop().then(()=>html5QrCode.clear()).catch(()=>{}); } }
+function kosongkanFormSemua() {
+  // 1. Bersihkan semua kotak input teks manual
+  const inputs = document.querySelectorAll('input[type="text"]');
+  inputs.forEach(input => { if (input) input.value = ""; });
+  
+  // 2. Kembalikan pilihan dropdown shift ke posisi awal (Shift 1)
+  const selectShift = document.querySelector('select');
+  if (selectShift) selectShift.selectedIndex = 0;
+
+  // 3. Bersihkan visual data detail teks di dalam kotak biru (kembalikan ke tanda strip)
+  const isiDetail = document.querySelectorAll('#detailBox span, .field-value, td, p');
+  // Jika kode Anda menggunakan ID spesifik, gunakan pembersih massal ini:
+  const ids = ['txtTfTujuan', 'txtExtAsal', 'txtUkuran', 'txtBerat', 'txtOpExt', 'txtJamExt'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = "-";
+  });
+
+  // 4. Reset variabel tampungan data di JavaScript
+  if (typeof tfCurrentItem !== 'undefined') tfCurrentItem = null;
+
+  // 5. Hapus total teks notifikasi sukses / eror di bawah form
+  const msgDiv = document.getElementById('msg');
+  if (msgDiv) msgDiv.innerHTML = "";
+  
+  console.log("Seluruh form dibersihkan tanpa eror.");
+}
 </script>
 </body>
 </html>
