@@ -4,220 +4,248 @@
 <base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SHEET naik TF - SCAN & MANUAL</title>
+<title>SHEET naik TF</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1D4E89">
 <link rel="icon" href="icon-192.png">
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#F3F4F6;--card:#FFF;--ink:#14181F;--mute:#5B6472;--line:#E3E6EA;--accent:#1D4E89;--good:#157F3C;--bad:#B91C1C;}
-  *{box-sizing:border-box;} body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);padding:18px;margin:0;}
+  *{box-sizing:border-box;}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:18px;margin:0;}
   h1{font-size:16px;font-weight:800;margin:0 0 2px;} .sub{font-size:11px;color:var(--mute);margin-bottom:16px;}
-  #formCard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;max-width:420px;}
-  .field{margin-bottom:14px;} .field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--mute);margin-bottom:5px;}
-  .field input,.field select{width:100%;padding:11px 12px;font-size:15px;border:1px solid var(--line);border-radius:7px;background:#fff;}
-  #infoBatch{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:11px 12px;margin-bottom:14px;font-size:12.5px;display:none;}
-  #infoBatch .r{display:flex;justify-content:space-between;padding:3px 0;} #infoBatch .r span:last-child{font-weight:700;font-family:'Roboto Mono',monospace;}
-  #btnSave{width:100%;padding:13px;font-size:14px;font-weight:700;border:none;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer;}
-  #btnSave:disabled{opacity:.6;} #btnWa{display:none;width:100%;padding:12px;font-size:14px;font-weight:800;border:none;border-radius:8px;background:#25D366;color:#fff;cursor:pointer;margin-top:8px;}
-  #msg{font-size:12.5px;margin-top:10px;} #msg.ok{color:var(--good);font-weight:700;} #msg.bad{color:var(--bad);font-weight:700;}
-  #scanModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;padding:16px;}
-  #scanBox{background:#fff;border-radius:12px;padding:12px;max-width:420px;margin:10% auto 0;}
+  #formCard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;max-width:420px;margin:0 auto;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--mute);margin-bottom:5px;}
+  .field input,.field select{width:100%;padding:11px 12px;font-size:15px;border:1px solid var(--line);border-radius:8px;background:#fff;}
+  .field input:disabled,.field select:disabled{background:#F3F4F6;color:var(--mute);}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(29,78,137,.15);}
+  #listBox{border:1px solid var(--line);border-radius:8px;max-height:260px;overflow-y:auto;margin-bottom:14px;background:#fff;}
+  #listBox .kosong{padding:12px;font-size:12.5px;color:var(--mute);}
+  .item{display:block;width:100%;text-align:left;padding:10px 12px;border:none;border-bottom:1px solid var(--line);background:#fff;cursor:pointer;font-size:12.5px;}
+  .item:last-child{border-bottom:none;}
+  .item.aktif{background:#EFF6FF;}
+  .item .a{font-weight:700;font-size:13px;}
+  .item .b{color:var(--mute);font-size:11.5px;margin-top:2px;}
+  #infoBox{display:none;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:11px 12px;margin-bottom:14px;font-size:12.5px;}
+  #infoBox .r{display:flex;justify-content:space-between;padding:3px 0;}
+  #infoBox .r span:last-child{font-weight:700;font-family:'Roboto Mono',monospace;}
+  .btn{width:100%;padding:13px;font-size:14px;font-weight:700;border:none;border-radius:8px;color:#fff;cursor:pointer;margin-top:8px;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  #btnSave{background:var(--accent);margin-top:4px;}
+  #btnShare{background:#25D366;}
+  #btnReset{background:#fff;color:var(--mute);border:1px solid var(--line);font-size:12.5px;padding:10px;}
+  #msg{font-size:12.5px;margin-top:10px;min-height:16px;}
+  #msg.ok{color:var(--good);font-weight:700;} #msg.bad{color:var(--bad);font-weight:700;}
 </style>
 </head>
 <body>
 <h1>SHEET naik TF</h1>
-<div class="sub">Bisa scan barcode, bisa ketik manual kalau barcode sobek</div>
+<div class="sub">Pilih Untuk TF, cari carsheet, lalu pilih data EXT</div>
+
 <div id="formCard">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+  <div class="row2">
     <div class="field"><label>Tanggal</label><input type="date" id="fTanggal"></div>
-    <div class="field"><label>Shift</label><select id="fShift"><option value="">- pilih -</option><option>1</option><option>2</option><option>3</option></select></div>
-  </div>
-  <div class="field"><label>No. Carsheet (Scan / Manual)</label>
-    <div style="display:flex; gap:6px;">
-      <input type="text" id="fCarsheet" placeholder="scan atau ketik manual" style="flex:1;" onkeydown="if(event.key==='Enter'){tfCariManual();}">
-      <button type="button" onclick="tfBukaScan()" style="padding:11px 12px; background:#111827; color:#fff; border:none; border-radius:7px; font-weight:800;">📷</button>
-      <button type="button" onclick="tfCariManual()" style="padding:11px 14px; background:var(--accent); color:#fff; border:none; border-radius:7px; font-weight:800;">CARI</button>
+    <div class="field"><label>Shift</label>
+      <select id="fShift"><option value="">- pilih -</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
     </div>
   </div>
-  <div id="infoBatch">
-    <div class="r"><span>TF Tujuan</span><span id="iTf">-</span></div>
-    <div class="r"><span>Ext Asal</span><span id="iExt">-</span></div>
+
+  <div class="field"><label>Untuk TF</label><select id="fTf" onchange="tfMuatBatch()"></select></div>
+
+  <div class="field"><label>Cari No. Carsheet</label>
+    <input type="text" id="fCari" placeholder="ketik carsheet untuk menyaring" oninput="tfRender()">
+  </div>
+
+  <div id="listBox"><div class="kosong">Pilih Untuk TF dulu</div></div>
+
+  <div id="infoBox">
+    <div class="r"><span>Carsheet</span><span id="iCarsheet">-</span></div>
     <div class="r"><span>Ukuran</span><span id="iUkuran">-</span></div>
     <div class="r"><span>Berat</span><span id="iBerat">-</span></div>
-    <div class="r"><span>Op Ext</span><span id="iNamaExt">-</span></div>
-    <div class="r"><span>Jam Ext</span><span id="iJam">-</span></div>
+    <div class="r"><span>Ext</span><span id="iExt">-</span></div>
+    <div class="r"><span>Nama Ext</span><span id="iNamaExt">-</span></div>
+    <div class="r"><span>Jam Input Ext</span><span id="iJamExt">-</span></div>
   </div>
-  <div class="field"><label>Nama Operator Thermo</label><input type="text" id="fNamaThermo" placeholder="Nama Anda"></div>
-  <button id="btnSave" onclick="tfSimpan()">Simpan</button>
-  <button id="btnWa" onclick="tfShareWa()">Share WA</button>
+
+  <div class="field"><label>Nama Operator Thermo</label><input type="text" id="fNamaThermo" placeholder="Nama operator thermo"></div>
+
+  <button id="btnSave" class="btn" onclick="tfSimpan()">Simpan</button>
+  <button id="btnShare" class="btn" onclick="tfShareWa()" disabled>Share WA</button>
+  <button id="btnReset" class="btn" onclick="tfKosongkan()">Kosongkan Form</button>
   <div id="msg"></div>
 </div>
-<div id="scanModal"><div id="scanBox"><div style="font-weight:800;text-align:center;margin-bottom:8px;">Scan Barcode Kitir</div><div id="reader"></div><button onclick="tfTutupScan()" style="width:100%;margin-top:10px;padding:11px;background:#fff;border:1px solid #ccc;border-radius:8px;">Tutup Kamera</button></div></div>
+
 <script>
-var tfCurrentItem=null, tfLastSaved=null;
 var WEBAPP_URL='https://script.google.com/macros/s/AKfycbxp5L0rGdC0ki2M18YjNnylr0aAOXDLCzW5k84fJhT7aCkdlFrPeOY2tH0b75MMjDJh/exec';
-function tfSetDefaultTanggal(){var d=new Date();var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');document.getElementById('fTanggal').value=iso;} tfSetDefaultTanggal();
-function tfJamSekarang(){var n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
+var TF_LIST=['TF5','TF6','TF7','TF8','TF9','TF10','TF12','TF13','TF14','TF15','TF16'];
 
-function tfLookup(carsheet, onSuccess, onError){
-  fetch(WEBAPP_URL+'?action=lookup&carsheet='+encodeURIComponent(carsheet)).then(r=>r.json()).then(onSuccess).catch(onError);
+var tfBatch=[];      // daftar baris EXT yang belum diambil untuk TF terpilih
+var tfCurrent=null;  // baris EXT yang dipilih
+var tfLast=null;     // data yang sudah tersimpan
+
+function setMsg(t,c){ var m=document.getElementById('msg'); m.textContent=t; m.className=c||''; }
+function tanggalHariIni(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function jamSekarang(){ var n=new Date(); return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
+
+function tfIsiTf(){
+  var sel=document.getElementById('fTf');
+  sel.innerHTML='<option value="">- pilih -</option>';
+  TF_LIST.forEach(function(v){ var o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o); });
 }
 
-function tfClearPilihan(){
-  var box=document.getElementById('listPilih');
-  if(box) box.innerHTML='';
+// Ambil baris EXT yang belum diambil ke TF terpilih
+function tfMuatBatch(){
+  tfPilihNull();
+  tfBatch=[];
+  var tf=document.getElementById('fTf').value;
+  if(!tf){ tfRender(); return; }
+  setMsg('Memuat data EXT...','');
+  fetch(WEBAPP_URL+'?action=batchOptions&tf='+encodeURIComponent(tf))
+    .then(r=>r.json())
+    .then(res=>{
+      if(res&&res.ok){ tfBatch=res.items||[]; setMsg('','' ); }
+      else{ setMsg('Gagal memuat: '+((res&&res.error)||''),'bad'); }
+      tfRender();
+    })
+    .catch(()=>{ setMsg('Gagal memuat data EXT','bad'); tfRender(); });
 }
 
-// Tampilkan daftar semua baris yang cocok, user pilih salah satu
-function tfTampilPilihan(items){
-  var box=document.getElementById('listPilih');
-  if(!box){
-    box=document.createElement('div');
-    box.id='listPilih';
-    document.getElementById('infoBatch').before(box);
-  }
+// Tampilkan daftar, disaring dengan teks carsheet
+function tfRender(){
+  var box=document.getElementById('listBox');
+  var cari=document.getElementById('fCari').value.trim().toUpperCase();
   box.innerHTML='';
-  box.style.marginBottom='14px';
-  var judul=document.createElement('div');
-  judul.style.cssText='font-size:11px;font-weight:700;text-transform:uppercase;color:#5B6472;margin-bottom:6px;';
-  judul.textContent='Ditemukan '+items.length+' data, pilih salah satu:';
-  box.appendChild(judul);
-  items.forEach(function(it,idx){
+  if(!document.getElementById('fTf').value){
+    box.innerHTML='<div class="kosong">Pilih Untuk TF dulu</div>'; return;
+  }
+  var list=tfBatch.filter(function(it){ return !cari || String(it.carsheet).toUpperCase().indexOf(cari)!==-1; });
+  if(!list.length){
+    box.innerHTML='<div class="kosong">Tidak ada data EXT yang belum diambil untuk TF ini</div>'; return;
+  }
+  list.forEach(function(it){
     var b=document.createElement('button');
     b.type='button';
-    b.style.cssText='display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:6px;border:1px solid #BFDBFE;background:#EFF6FF;border-radius:8px;font-size:12.5px;cursor:pointer;';
-    var baris1=document.createElement('div');
-    baris1.style.fontWeight='700';
-    baris1.textContent=(idx+1)+'. '+it.carsheet+' | '+it.ukuran+' | '+it.berat+' kg';
-    var baris2=document.createElement('div');
-    baris2.style.cssText='color:#5B6472;font-size:11.5px;margin-top:2px;';
-    baris2.textContent='Ext: '+it.ext+' | Op Ext: '+it.namaExt+' | Jam: '+it.jam+' | Baris: '+it.row;
-    b.appendChild(baris1);
-    b.appendChild(baris2);
-    b.onclick=function(){ tfClearPilihan(); tfOnFound(it); };
+    b.className='item'+(tfCurrent&&tfCurrent===it?' aktif':'');
+    var a=document.createElement('div'); a.className='a';
+    a.textContent=it.carsheet+' | '+it.ukuran+' | '+it.berat+' kg';
+    var c=document.createElement('div'); c.className='b';
+    c.textContent='Ext '+it.ext+' | '+it.namaExt+' | Jam '+it.jam;
+    b.appendChild(a); b.appendChild(c);
+    b.onclick=function(){ tfPilih(it); };
     box.appendChild(b);
   });
 }
 
-function tfOnFound(it){
-  tfClearPilihan();
-  tfCurrentItem=it;
-  document.getElementById('iTf').textContent=it.tf;
-  document.getElementById('iExt').textContent=it.ext;
+function tfPilih(it){
+  tfCurrent=it;
+  document.getElementById('iCarsheet').textContent=it.carsheet;
   document.getElementById('iUkuran').textContent=it.ukuran;
   document.getElementById('iBerat').textContent=it.berat+' kg';
+  document.getElementById('iExt').textContent=it.ext;
   document.getElementById('iNamaExt').textContent=it.namaExt;
-  document.getElementById('iJam').textContent=it.jam;
-  document.getElementById('infoBatch').style.display='block';
-  document.getElementById('msg').textContent='Dipilih: '+it.carsheet+' (baris '+it.row+')'; document.getElementById('msg').className='ok';
+  document.getElementById('iJamExt').textContent=it.jam;
+  document.getElementById('infoBox').style.display='block';
+  tfRender();
+  setMsg('Data dipilih. Isi nama operator thermo lalu Simpan.','ok');
 }
-
-function tfCariManual(){
-  var carsheet=document.getElementById('fCarsheet').value.trim();
-  var msg=document.getElementById('msg');
-  if(!carsheet){ msg.textContent='Isi No. Carsheet dulu'; msg.className='bad'; return; }
-  msg.textContent='Mencari '+carsheet+'...'; msg.className='';
-  tfClearPilihan();
-  tfLookup(carsheet,function(res){
-    if(res&&res.ok&&res.items&&res.items.length){
-      if(res.items.length===1){ tfOnFound(res.items[0]); }
-      else{
-        document.getElementById('infoBatch').style.display='none';
-        tfCurrentItem=null;
-        tfTampilPilihan(res.items);
-        msg.textContent='Carsheet '+carsheet+' ada '+res.items.length+' data, silakan pilih'; msg.className='ok';
-      }
-    }
-    else{ document.getElementById('infoBatch').style.display='none'; tfCurrentItem=null; msg.textContent=(res&&res.error)||'Tidak ketemu'; msg.className='bad'; }
-  },function(){ msg.textContent='Gagal lookup'; msg.className='bad'; });
-}
-
-// RESET FORM
-function tfResetForm(){
-  document.getElementById('fCarsheet').value='';
-  document.getElementById('infoBatch').style.display='none';
-  tfClearPilihan();
-  tfCurrentItem=null;
-  document.getElementById('iTf').textContent='-';
-  document.getElementById('iExt').textContent='-';
-  document.getElementById('iUkuran').textContent='-';
-  document.getElementById('iBerat').textContent='-';
-  document.getElementById('iNamaExt').textContent='-';
-  document.getElementById('iJam').textContent='-';
-  document.getElementById('btnWa').style.display='none';
-  document.getElementById('fCarsheet').focus();
-}
-
-// Teks pesan WA dari data yang sudah disimpan
-function tfBuatPesan(d){
-  return "✅ SHEET NAIK TF\nTanggal: "+d.tanggal+" | Jam: "+d.jam+"\nShift: "+d.shift+" | TF: "+d.tf+"\nCarsheet: "+d.carsheet+"\nUkuran: "+d.ukuran+"\nBerat: "+d.berat+" kg\nExt: "+d.ext+" | Op Ext: "+d.namaExt+"\nOp Thermo: "+d.namaThermo;
-}
-function tfBuatUrlWa(d){
-  return "https://wa.me/?text="+encodeURIComponent(tfBuatPesan(d));
+function tfPilihNull(){
+  tfCurrent=null;
+  document.getElementById('infoBox').style.display='none';
 }
 
 function tfSimpan(){
   var tanggal=document.getElementById('fTanggal').value;
   var shift=document.getElementById('fShift').value;
-  var carsheet=document.getElementById('fCarsheet').value.trim();
+  var tf=document.getElementById('fTf').value;
   var namaThermo=document.getElementById('fNamaThermo').value.trim();
-  var msg=document.getElementById('msg');
-  if(!tanggal){msg.textContent='Tanggal belum diisi';msg.className='bad';return;}
-  if(!shift){msg.textContent='Shift belum dipilih';msg.className='bad';return;}
-  if(!carsheet||!tfCurrentItem){msg.textContent='Cari No. Carsheet dan pilih datanya dulu';msg.className='bad';return;}
-  if(!namaThermo){msg.textContent='Nama Thermo belum diisi';msg.className='bad';return;}
+  if(!tanggal){ setMsg('Tanggal belum diisi','bad'); return; }
+  if(!shift){ setMsg('Shift belum dipilih','bad'); return; }
+  if(!tf){ setMsg('Untuk TF belum dipilih','bad'); return; }
+  if(!tfCurrent){ setMsg('Pilih data EXT dulu','bad'); return; }
+  if(!namaThermo){ setMsg('Nama operator thermo belum diisi','bad'); return; }
 
-  // Buka tab kosong sekarang (saat klik), supaya tidak diblokir popup. Link WA diisi setelah simpan sukses.
-  var waWin=window.open('','_blank');
+  var beratAngka=String(tfCurrent.berat||'').replace(/[^0-9.]/g,'')||tfCurrent.berat;
+  var data={
+    _app:'tf',
+    tanggal:tanggal,
+    jam:jamSekarang(),
+    shift:shift,
+    tf:tf,
+    carsheet:tfCurrent.carsheet,
+    ukuran:tfCurrent.ukuran,
+    berat:beratAngka,
+    ext:tfCurrent.ext,
+    namaExt:tfCurrent.namaExt,
+    jamExt:tfCurrent.jam,
+    namaThermo:namaThermo
+  };
 
-  var beratAngka = String(tfCurrentItem.berat||'').replace(/[^0-9.]/g,'') || tfCurrentItem.berat;
-  var data={_app:'tf',tanggal:tanggal,jam:tfJamSekarang(),shift:shift,tf:tfCurrentItem.tf,carsheet:carsheet,ukuran:tfCurrentItem.ukuran,berat:beratAngka,ext:tfCurrentItem.ext,namaExt:tfCurrentItem.namaExt,namaThermo:namaThermo};
   var btn=document.getElementById('btnSave');
-  btn.disabled=true; msg.textContent='Menyimpan...'; msg.className='';
+  btn.disabled=true; setMsg('Menyimpan...','');
 
   fetch(WEBAPP_URL+'?action=save&payload='+encodeURIComponent(JSON.stringify(data)))
     .then(r=>r.text())
     .then(t=>{
       var res;
-      try{ res=JSON.parse(t); }catch(e){ res={ok:false, error:t}; }
-      btn.disabled=false;
+      try{ res=JSON.parse(t); }catch(e){ res={ok:false,error:t}; }
       if(res&&res.ok){
-        tfLastSaved=data;
-        var url=tfBuatUrlWa(data);
-        if(waWin && !waWin.closed){
-          waWin.location.href=url;   // langsung ke share WA
-        } else {
-          window.location.href=url;  // popup diblokir: buka WA di tab ini
-          return;
-        }
-        msg.textContent='✅ Data Tersimpan'; msg.className='ok';
-        setTimeout(()=>{ tfResetForm(); }, 1200);
+        tfLast=data;
+        tfKunci(true);
+        document.getElementById('btnShare').disabled=false;
+        setMsg('✅ Tersimpan. Tekan Share WA, lalu Kosongkan Form untuk input berikutnya.','ok');
       } else {
-        if(waWin && !waWin.closed) waWin.close();
-        msg.textContent='❌ Gagal: '+(res.error||'unknown - data dobel?'); msg.className='bad';
+        btn.disabled=false;
+        setMsg('❌ Gagal: '+(res.error||'tidak diketahui'),'bad');
       }
     })
     .catch(e=>{
       btn.disabled=false;
-      if(waWin && !waWin.closed) waWin.close();
-      msg.textContent='❌ Gagal: '+e.message; msg.className='bad';
+      setMsg('❌ Gagal: '+e.message,'bad');
     });
 }
 
-// Tombol cadangan, hanya dipakai jika share otomatis gagal
-function tfShareWa(){ if(!tfLastSaved) return; window.open(tfBuatUrlWa(tfLastSaved),"_blank"); }
-
-var html5QrCode;
-function tfBukaScan(){
-  document.getElementById('scanModal').style.display='block';
-  html5QrCode=new Html5Qrcode("reader");
-  html5QrCode.start({facingMode:"environment"},{fps:10,qrbox:{width:280,height:120}},
-    function(decoded){ document.getElementById('fCarsheet').value=decoded; tfTutupScan(); tfCariManual(); },function(){}
-  ).catch(e=>{alert('Kamera gagal: '+e);});
+function tfKunci(on){
+  ['fTanggal','fShift','fTf','fCari','fNamaThermo'].forEach(function(id){
+    document.getElementById(id).disabled=on;
+  });
+  document.getElementById('btnSave').disabled=on;
+  document.getElementById('listBox').style.display=on?'none':'block';
 }
-function tfTutupScan(){ document.getElementById('scanModal').style.display='none'; if(html5QrCode){ html5QrCode.stop().then(()=>html5QrCode.clear()).catch(()=>{}); } }
+
+function tfPesan(d){
+  return "✅ SHEET NAIK TF\n"+
+    "Tanggal: "+d.tanggal+" | Jam TF: "+d.jam+"\n"+
+    "Shift: "+d.shift+" | TF: "+d.tf+"\n"+
+    "Carsheet: "+d.carsheet+"\n"+
+    "Ukuran: "+d.ukuran+"\n"+
+    "Berat: "+d.berat+" kg\n"+
+    "Ext: "+d.ext+" | Nama Ext: "+d.namaExt+"\n"+
+    "Jam Input Ext: "+d.jamExt+"\n"+
+    "Op Thermo: "+d.namaThermo;
+}
+
+function tfShareWa(){
+  if(!tfLast){ setMsg('Simpan dulu','bad'); return; }
+  window.open("https://wa.me/?text="+encodeURIComponent(tfPesan(tfLast)),"_blank");
+}
+
+function tfKosongkan(){
+  tfLast=null; tfCurrent=null;
+  ['fShift','fTf','fCari','fNamaThermo'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('fTanggal').value=tanggalHariIni();
+  document.getElementById('infoBox').style.display='none';
+  document.getElementById('btnShare').disabled=true;
+  tfKunci(false);
+  tfBatch=[];
+  tfRender();
+  setMsg('Form dikosongkan. Pilih Untuk TF untuk input berikutnya.','ok');
+}
+
+document.getElementById('fTanggal').value=tanggalHariIni();
+tfIsiTf();
+tfRender();
 </script>
 </body>
 </html>
