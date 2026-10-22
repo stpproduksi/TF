@@ -192,7 +192,7 @@ function tfSimpan(){
           window.location.href=url;  // popup diblokir: buka WA di tab ini
           return;
         }
-        msg.textContent='✅ Tersimpan - WhatsApp dibuka, form dikosongkan otomatis'; msg.className='ok';
+        msg.textContent='✅ Data Tersimpan'; msg.className='ok';
         setTimeout(()=>{ tfResetForm(); }, 1200);
       } else {
         if(waWin && !waWin.closed) waWin.close();
