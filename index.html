@@ -62,12 +62,47 @@ function tfSetDefaultTanggal(){var d=new Date();var iso=d.getFullYear()+'-'+Stri
 function tfJamSekarang(){var n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
 
 function tfLookup(carsheet, onSuccess, onError){
-  if(typeof google!=='undefined'&&google.script&&google.script.run){
-    google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).tfLookupByCarsheet(carsheet); return;
-  }
   fetch(WEBAPP_URL+'?action=lookup&carsheet='+encodeURIComponent(carsheet)).then(r=>r.json()).then(onSuccess).catch(onError);
 }
+
+function tfClearPilihan(){
+  var box=document.getElementById('listPilih');
+  if(box) box.innerHTML='';
+}
+
+// Tampilkan daftar semua baris yang cocok, user pilih salah satu
+function tfTampilPilihan(items){
+  var box=document.getElementById('listPilih');
+  if(!box){
+    box=document.createElement('div');
+    box.id='listPilih';
+    document.getElementById('infoBatch').before(box);
+  }
+  box.innerHTML='';
+  box.style.marginBottom='14px';
+  var judul=document.createElement('div');
+  judul.style.cssText='font-size:11px;font-weight:700;text-transform:uppercase;color:#5B6472;margin-bottom:6px;';
+  judul.textContent='Ditemukan '+items.length+' data, pilih salah satu:';
+  box.appendChild(judul);
+  items.forEach(function(it,idx){
+    var b=document.createElement('button');
+    b.type='button';
+    b.style.cssText='display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:6px;border:1px solid #BFDBFE;background:#EFF6FF;border-radius:8px;font-size:12.5px;cursor:pointer;';
+    var baris1=document.createElement('div');
+    baris1.style.fontWeight='700';
+    baris1.textContent=(idx+1)+'. '+it.carsheet+' | '+it.ukuran+' | '+it.berat+' kg';
+    var baris2=document.createElement('div');
+    baris2.style.cssText='color:#5B6472;font-size:11.5px;margin-top:2px;';
+    baris2.textContent='Ext: '+it.ext+' | Op Ext: '+it.namaExt+' | Jam: '+it.jam+' | Baris: '+it.row;
+    b.appendChild(baris1);
+    b.appendChild(baris2);
+    b.onclick=function(){ tfClearPilihan(); tfOnFound(it); };
+    box.appendChild(b);
+  });
+}
+
 function tfOnFound(it){
+  tfClearPilihan();
   tfCurrentItem=it;
   document.getElementById('iTf').textContent=it.tf;
   document.getElementById('iExt').textContent=it.ext;
@@ -76,16 +111,26 @@ function tfOnFound(it){
   document.getElementById('iNamaExt').textContent=it.namaExt;
   document.getElementById('iJam').textContent=it.jam;
   document.getElementById('infoBatch').style.display='block';
-  document.getElementById('msg').textContent='Ditemukan: '+it.carsheet; document.getElementById('msg').className='ok';
+  document.getElementById('msg').textContent='Dipilih: '+it.carsheet+' (baris '+it.row+')'; document.getElementById('msg').className='ok';
 }
+
 function tfCariManual(){
   var carsheet=document.getElementById('fCarsheet').value.trim();
   var msg=document.getElementById('msg');
   if(!carsheet){ msg.textContent='Isi No. Carsheet dulu'; msg.className='bad'; return; }
   msg.textContent='Mencari '+carsheet+'...'; msg.className='';
+  tfClearPilihan();
   tfLookup(carsheet,function(res){
-    if(res&&res.ok){ tfOnFound(res.item); }
-    else{ document.getElementById('infoBatch').style.display='none'; tfCurrentItem=null; msg.textContent=res.error||'Tidak ketemu'; msg.className='bad'; }
+    if(res&&res.ok&&res.items&&res.items.length){
+      if(res.items.length===1){ tfOnFound(res.items[0]); }
+      else{
+        document.getElementById('infoBatch').style.display='none';
+        tfCurrentItem=null;
+        tfTampilPilihan(res.items);
+        msg.textContent='Carsheet '+carsheet+' ada '+res.items.length+' data, silakan pilih'; msg.className='ok';
+      }
+    }
+    else{ document.getElementById('infoBatch').style.display='none'; tfCurrentItem=null; msg.textContent=(res&&res.error)||'Tidak ketemu'; msg.className='bad'; }
   },function(){ msg.textContent='Gagal lookup'; msg.className='bad'; });
 }
 
@@ -93,6 +138,7 @@ function tfCariManual(){
 function tfResetForm(){
   document.getElementById('fCarsheet').value='';
   document.getElementById('infoBatch').style.display='none';
+  tfClearPilihan();
   tfCurrentItem=null;
   document.getElementById('iTf').textContent='-';
   document.getElementById('iExt').textContent='-';
@@ -111,29 +157,32 @@ function tfSimpan(){
   var msg=document.getElementById('msg');
   if(!tanggal){msg.textContent='Tanggal belum diisi';msg.className='bad';return;}
   if(!shift){msg.textContent='Shift belum dipilih';msg.className='bad';return;}
-  if(!carsheet||!tfCurrentItem){msg.textContent='Cari No. Carsheet dulu (scan / CARI)';msg.className='bad';return;}
+  if(!carsheet||!tfCurrentItem){msg.textContent='Cari No. Carsheet dan pilih datanya dulu';msg.className='bad';return;}
   if(!namaThermo){msg.textContent='Nama Thermo belum diisi';msg.className='bad';return;}
   var beratAngka = String(tfCurrentItem.berat||'').replace(/[^0-9.]/g,'') || tfCurrentItem.berat;
   var data={_app:'tf',tanggal:tanggal,jam:tfJamSekarang(),shift:shift,tf:tfCurrentItem.tf,carsheet:carsheet,ukuran:tfCurrentItem.ukuran,berat:beratAngka,ext:tfCurrentItem.ext,namaExt:tfCurrentItem.namaExt,namaThermo:namaThermo};
   var btn=document.getElementById('btnSave');
   btn.disabled=true; msg.textContent='Menyimpan...'; msg.className='';
-  var kirim = (typeof google!=='undefined'&&google.script&&google.script.run) ? (cb=>google.script.run.withSuccessHandler(cb).withFailureHandler(cb).tfSimpanData(data)) : (cb=>fetch(WEBAPP_URL+'?action=save&payload='+encodeURIComponent(JSON.stringify(data))).then(r=>r.text()).then(t=>{ try{ cb(JSON.parse(t)); }catch(e){ cb({ok:false, error:t}); } }).catch(e=>cb({ok:false, error:e.message})));
-  
-  kirim(function(res){
-    btn.disabled=false;
-    if(res&&res.ok){
-      tfLastSaved=data; 
-      msg.textContent='✅ Tersimpan - Form dikosongkan otomatis'; msg.className='ok';
-      document.getElementById('btnWa').style.display='block';
-      // share WA dulu baru reset biar data masih ada
-      setTimeout(()=>{ tfResetForm(); }, 1200);
-    } else {
-      // JIKA DOBEL 1 BARIS, PESAN DARI SHEET AKAN MUNCUL DISINI
-      msg.textContent='❌ Gagal: '+(res.error||'unknown - data dobel?'); msg.className='bad';
-    }
-  });
+  fetch(WEBAPP_URL+'?action=save&payload='+encodeURIComponent(JSON.stringify(data)))
+    .then(r=>r.text())
+    .then(t=>{
+      var res;
+      try{ res=JSON.parse(t); }catch(e){ res={ok:false, error:t}; }
+      btn.disabled=false;
+      if(res&&res.ok){
+        tfLastSaved=data;
+        msg.textContent='✅ Tersimpan - Form dikosongkan otomatis'; msg.className='ok';
+        document.getElementById('btnWa').style.display='block';
+        setTimeout(()=>{ tfResetForm(); }, 1200);
+      } else {
+        msg.textContent='❌ Gagal: '+(res.error||'unknown - data dobel?'); msg.className='bad';
+      }
+    })
+    .catch(e=>{ btn.disabled=false; msg.textContent='❌ Gagal: '+e.message; msg.className='bad'; });
 }
+
 function tfShareWa(){ if(!tfLastSaved) return; var d=tfLastSaved; var pesan="✅ SHEET NAIK TF\nTanggal: "+d.tanggal+" | Jam: "+d.jam+"\nShift: "+d.shift+" | TF: "+d.tf+"\nCarsheet: "+d.carsheet+"\nUkuran: "+d.ukuran+"\nBerat: "+d.berat+" kg\nExt: "+d.ext+" | Op Ext: "+d.namaExt+"\nOp Thermo: "+d.namaThermo; window.open("https://wa.me/?text="+encodeURIComponent(pesan),"_blank"); }
+
 var html5QrCode;
 function tfBukaScan(){
   document.getElementById('scanModal').style.display='block';
