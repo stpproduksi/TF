@@ -134,7 +134,7 @@ function tfCariManual(){
   },function(){ msg.textContent='Gagal lookup'; msg.className='bad'; });
 }
 
-// RESET OTOMATIS
+// RESET FORM
 function tfResetForm(){
   document.getElementById('fCarsheet').value='';
   document.getElementById('infoBatch').style.display='none';
@@ -146,7 +146,16 @@ function tfResetForm(){
   document.getElementById('iBerat').textContent='-';
   document.getElementById('iNamaExt').textContent='-';
   document.getElementById('iJam').textContent='-';
+  document.getElementById('btnWa').style.display='none';
   document.getElementById('fCarsheet').focus();
+}
+
+// Teks pesan WA dari data yang sudah disimpan
+function tfBuatPesan(d){
+  return "✅ SHEET NAIK TF\nTanggal: "+d.tanggal+" | Jam: "+d.jam+"\nShift: "+d.shift+" | TF: "+d.tf+"\nCarsheet: "+d.carsheet+"\nUkuran: "+d.ukuran+"\nBerat: "+d.berat+" kg\nExt: "+d.ext+" | Op Ext: "+d.namaExt+"\nOp Thermo: "+d.namaThermo;
+}
+function tfBuatUrlWa(d){
+  return "https://wa.me/?text="+encodeURIComponent(tfBuatPesan(d));
 }
 
 function tfSimpan(){
@@ -159,10 +168,15 @@ function tfSimpan(){
   if(!shift){msg.textContent='Shift belum dipilih';msg.className='bad';return;}
   if(!carsheet||!tfCurrentItem){msg.textContent='Cari No. Carsheet dan pilih datanya dulu';msg.className='bad';return;}
   if(!namaThermo){msg.textContent='Nama Thermo belum diisi';msg.className='bad';return;}
+
+  // Buka tab kosong sekarang (saat klik), supaya tidak diblokir popup. Link WA diisi setelah simpan sukses.
+  var waWin=window.open('','_blank');
+
   var beratAngka = String(tfCurrentItem.berat||'').replace(/[^0-9.]/g,'') || tfCurrentItem.berat;
   var data={_app:'tf',tanggal:tanggal,jam:tfJamSekarang(),shift:shift,tf:tfCurrentItem.tf,carsheet:carsheet,ukuran:tfCurrentItem.ukuran,berat:beratAngka,ext:tfCurrentItem.ext,namaExt:tfCurrentItem.namaExt,namaThermo:namaThermo};
   var btn=document.getElementById('btnSave');
   btn.disabled=true; msg.textContent='Menyimpan...'; msg.className='';
+
   fetch(WEBAPP_URL+'?action=save&payload='+encodeURIComponent(JSON.stringify(data)))
     .then(r=>r.text())
     .then(t=>{
@@ -171,17 +185,29 @@ function tfSimpan(){
       btn.disabled=false;
       if(res&&res.ok){
         tfLastSaved=data;
-        msg.textContent='✅ Tersimpan - Form dikosongkan otomatis'; msg.className='ok';
-        document.getElementById('btnWa').style.display='block';
+        var url=tfBuatUrlWa(data);
+        if(waWin && !waWin.closed){
+          waWin.location.href=url;   // langsung ke share WA
+        } else {
+          window.location.href=url;  // popup diblokir: buka WA di tab ini
+          return;
+        }
+        msg.textContent='✅ Tersimpan - WhatsApp dibuka, form dikosongkan otomatis'; msg.className='ok';
         setTimeout(()=>{ tfResetForm(); }, 1200);
       } else {
+        if(waWin && !waWin.closed) waWin.close();
         msg.textContent='❌ Gagal: '+(res.error||'unknown - data dobel?'); msg.className='bad';
       }
     })
-    .catch(e=>{ btn.disabled=false; msg.textContent='❌ Gagal: '+e.message; msg.className='bad'; });
+    .catch(e=>{
+      btn.disabled=false;
+      if(waWin && !waWin.closed) waWin.close();
+      msg.textContent='❌ Gagal: '+e.message; msg.className='bad';
+    });
 }
 
-function tfShareWa(){ if(!tfLastSaved) return; var d=tfLastSaved; var pesan="✅ SHEET NAIK TF\nTanggal: "+d.tanggal+" | Jam: "+d.jam+"\nShift: "+d.shift+" | TF: "+d.tf+"\nCarsheet: "+d.carsheet+"\nUkuran: "+d.ukuran+"\nBerat: "+d.berat+" kg\nExt: "+d.ext+" | Op Ext: "+d.namaExt+"\nOp Thermo: "+d.namaThermo; window.open("https://wa.me/?text="+encodeURIComponent(pesan),"_blank"); }
+// Tombol cadangan, hanya dipakai jika share otomatis gagal
+function tfShareWa(){ if(!tfLastSaved) return; window.open(tfBuatUrlWa(tfLastSaved),"_blank"); }
 
 var html5QrCode;
 function tfBukaScan(){
