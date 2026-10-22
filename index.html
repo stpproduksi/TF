@@ -8,6 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1D4E89">
 <link rel="icon" href="icon-192.png">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#F3F4F6;--card:#FFF;--ink:#14181F;--mute:#5B6472;--line:#E3E6EA;--accent:#1D4E89;--good:#157F3C;--bad:#B91C1C;}
@@ -21,6 +22,11 @@
   .field input,.field select{width:100%;padding:11px 12px;font-size:15px;border:1px solid var(--line);border-radius:8px;background:#fff;}
   .field input:disabled,.field select:disabled{background:#F3F4F6;color:var(--mute);}
   .field input:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(29,78,137,.15);}
+  #scanRow{display:flex;gap:8px;align-items:center;margin-bottom:14px;}
+  #btnScan{flex:1;padding:12px;font-size:14px;font-weight:700;border:none;border-radius:8px;background:#111827;color:#fff;cursor:pointer;}
+  #btnScan:disabled{opacity:.5;cursor:not-allowed;}
+  #btnClearScan{padding:12px 14px;font-size:12.5px;font-weight:700;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--mute);cursor:pointer;}
+  #scanInfo{font-size:12px;color:var(--mute);margin:-6px 0 12px;min-height:16px;}
   #listBox{border:1px solid var(--line);border-radius:8px;max-height:260px;overflow-y:auto;margin-bottom:14px;background:#fff;}
   #listBox .kosong{padding:12px;font-size:12.5px;color:var(--mute);}
   .item{display:block;width:100%;text-align:left;padding:10px 12px;border:none;border-bottom:1px solid var(--line);background:#fff;cursor:pointer;font-size:12.5px;}
@@ -38,11 +44,13 @@
   #btnReset{background:#fff;color:var(--mute);border:1px solid var(--line);font-size:12.5px;padding:10px;}
   #msg{font-size:12.5px;margin-top:10px;min-height:16px;}
   #msg.ok{color:var(--good);font-weight:700;} #msg.bad{color:var(--bad);font-weight:700;}
+  #scanModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;padding:16px;}
+  #scanBox{background:#fff;border-radius:12px;padding:12px;max-width:420px;margin:10% auto 0;}
 </style>
 </head>
 <body>
 <h1>SHEET naik TF</h1>
-<div class="sub">Pilih Untuk TF, cari carsheet, lalu pilih data EXT</div>
+<div class="sub">Pilih Untuk TF, scan barcode carsheet, lalu pilih data EXT</div>
 
 <div id="formCard">
   <div class="row2">
@@ -54,9 +62,11 @@
 
   <div class="field"><label>Untuk TF</label><select id="fTf" onchange="tfMuatBatch()"></select></div>
 
-  <div class="field"><label>Cari No. Carsheet</label>
-    <input type="text" id="fCari" placeholder="ketik carsheet untuk menyaring" oninput="tfRender()">
+  <div id="scanRow">
+    <button id="btnScan" type="button" onclick="tfBukaScan()">📷 Scan Barcode Carsheet</button>
+    <button id="btnClearScan" type="button" onclick="tfClearScan()">Hapus</button>
   </div>
+  <div id="scanInfo"></div>
 
   <div id="listBox"><div class="kosong">Pilih Untuk TF dulu</div></div>
 
@@ -77,13 +87,21 @@
   <div id="msg"></div>
 </div>
 
+<div id="scanModal"><div id="scanBox">
+  <div style="font-weight:800;text-align:center;margin-bottom:8px;">Scan Barcode Carsheet</div>
+  <div id="reader"></div>
+  <button onclick="tfTutupScan()" style="width:100%;margin-top:10px;padding:11px;background:#fff;border:1px solid #ccc;border-radius:8px;">Tutup Kamera</button>
+</div></div>
+
 <script>
 var WEBAPP_URL='https://script.google.com/macros/s/AKfycbxp5L0rGdC0ki2M18YjNnylr0aAOXDLCzW5k84fJhT7aCkdlFrPeOY2tH0b75MMjDJh/exec';
 var TF_LIST=['TF5','TF6','TF7','TF8','TF9','TF10','TF12','TF13','TF14','TF15','TF16'];
 
-var tfBatch=[];      // daftar baris EXT yang belum diambil untuk TF terpilih
-var tfCurrent=null;  // baris EXT yang dipilih
-var tfLast=null;     // data yang sudah tersimpan
+var tfBatch=[];       // baris EXT yang belum diambil untuk TF terpilih
+var tfCurrent=null;   // baris EXT yang dipilih
+var tfLast=null;      // data yang sudah tersimpan
+var tfScanFilter='';  // carsheet hasil scan, dipakai untuk menyaring daftar
+var html5QrCode=null;
 
 function setMsg(t,c){ var m=document.getElementById('msg'); m.textContent=t; m.className=c||''; }
 function tanggalHariIni(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -105,24 +123,39 @@ function tfMuatBatch(){
   fetch(WEBAPP_URL+'?action=batchOptions&tf='+encodeURIComponent(tf))
     .then(r=>r.json())
     .then(res=>{
-      if(res&&res.ok){ tfBatch=res.items||[]; setMsg('','' ); }
+      if(res&&res.ok){ tfBatch=res.items||[]; setMsg('',''); }
       else{ setMsg('Gagal memuat: '+((res&&res.error)||''),'bad'); }
+      tfCekOtomatis();
       tfRender();
     })
     .catch(()=>{ setMsg('Gagal memuat data EXT','bad'); tfRender(); });
 }
 
-// Tampilkan daftar, disaring dengan teks carsheet
+// Daftar yang tampil: sesuai hasil scan, atau semua jika belum scan
+function tfListTampil(){
+  var cari=tfScanFilter.toUpperCase();
+  return tfBatch.filter(function(it){
+    return !cari || String(it.carsheet).trim().toUpperCase()===cari;
+  });
+}
+
+// Jika hasil scan hanya satu baris, langsung dipilih
+function tfCekOtomatis(){
+  if(!tfScanFilter) return;
+  var list=tfListTampil();
+  if(list.length===1) tfPilih(list[0]);
+}
+
 function tfRender(){
   var box=document.getElementById('listBox');
-  var cari=document.getElementById('fCari').value.trim().toUpperCase();
   box.innerHTML='';
   if(!document.getElementById('fTf').value){
     box.innerHTML='<div class="kosong">Pilih Untuk TF dulu</div>'; return;
   }
-  var list=tfBatch.filter(function(it){ return !cari || String(it.carsheet).toUpperCase().indexOf(cari)!==-1; });
+  var list=tfListTampil();
   if(!list.length){
-    box.innerHTML='<div class="kosong">Tidak ada data EXT yang belum diambil untuk TF ini</div>'; return;
+    box.innerHTML='<div class="kosong">'+(tfScanFilter?'Carsheet '+tfScanFilter+' tidak ditemukan di data EXT yang belum diambil untuk TF ini':'Tidak ada data EXT yang belum diambil untuk TF ini')+'</div>';
+    return;
   }
   list.forEach(function(it){
     var b=document.createElement('button');
@@ -155,6 +188,49 @@ function tfPilihNull(){
   document.getElementById('infoBox').style.display='none';
 }
 
+// Scan barcode carsheet
+function tfBukaScan(){
+  if(!document.getElementById('fTf').value){ setMsg('Pilih Untuk TF dulu','bad'); return; }
+  document.getElementById('scanModal').style.display='block';
+  html5QrCode=new Html5Qrcode('reader');
+  html5QrCode.start(
+    {facingMode:'environment'},
+    {fps:10, qrbox:{width:280,height:120}},
+    function(decoded){
+      tfTutupScan();
+      tfSetScan(String(decoded).trim());
+    },
+    function(){}
+  ).catch(function(e){
+    document.getElementById('scanModal').style.display='none';
+    setMsg('Kamera gagal dibuka: '+e,'bad');
+  });
+}
+function tfTutupScan(){
+  document.getElementById('scanModal').style.display='none';
+  if(html5QrCode){
+    html5QrCode.stop().then(function(){ html5QrCode.clear(); }).catch(function(){});
+    html5QrCode=null;
+  }
+}
+function tfSetScan(kode){
+  tfScanFilter=kode;
+  document.getElementById('scanInfo').textContent='Hasil scan: '+kode;
+  document.getElementById('btnClearScan').style.display='block';
+  tfPilihNull();
+  tfCekOtomatis();
+  tfRender();
+  if(tfListTampil().length===0) setMsg('Carsheet '+kode+' tidak ditemukan','bad');
+  else if(!tfCurrent) setMsg('Carsheet '+kode+' ada '+tfListTampil().length+' data, silakan pilih','ok');
+}
+function tfClearScan(){
+  tfScanFilter='';
+  document.getElementById('scanInfo').textContent='';
+  tfPilihNull();
+  tfRender();
+  setMsg('','');
+}
+
 function tfSimpan(){
   var tanggal=document.getElementById('fTanggal').value;
   var shift=document.getElementById('fShift').value;
@@ -163,7 +239,7 @@ function tfSimpan(){
   if(!tanggal){ setMsg('Tanggal belum diisi','bad'); return; }
   if(!shift){ setMsg('Shift belum dipilih','bad'); return; }
   if(!tf){ setMsg('Untuk TF belum dipilih','bad'); return; }
-  if(!tfCurrent){ setMsg('Pilih data EXT dulu','bad'); return; }
+  if(!tfCurrent){ setMsg('Scan carsheet dan pilih data EXT dulu','bad'); return; }
   if(!namaThermo){ setMsg('Nama operator thermo belum diisi','bad'); return; }
 
   var beratAngka=String(tfCurrent.berat||'').replace(/[^0-9.]/g,'')||tfCurrent.berat;
@@ -207,9 +283,10 @@ function tfSimpan(){
 }
 
 function tfKunci(on){
-  ['fTanggal','fShift','fTf','fCari','fNamaThermo'].forEach(function(id){
+  ['fTanggal','fShift','fTf','fNamaThermo'].forEach(function(id){
     document.getElementById(id).disabled=on;
   });
+  document.getElementById('btnScan').disabled=on;
   document.getElementById('btnSave').disabled=on;
   document.getElementById('listBox').style.display=on?'none':'block';
 }
@@ -232,10 +309,11 @@ function tfShareWa(){
 }
 
 function tfKosongkan(){
-  tfLast=null; tfCurrent=null;
-  ['fShift','fTf','fCari','fNamaThermo'].forEach(function(id){ document.getElementById(id).value=''; });
+  tfLast=null; tfCurrent=null; tfScanFilter='';
+  ['fShift','fTf','fNamaThermo'].forEach(function(id){ document.getElementById(id).value=''; });
   document.getElementById('fTanggal').value=tanggalHariIni();
   document.getElementById('infoBox').style.display='none';
+  document.getElementById('scanInfo').textContent='';
   document.getElementById('btnShare').disabled=true;
   tfKunci(false);
   tfBatch=[];
