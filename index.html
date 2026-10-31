@@ -81,7 +81,7 @@
     <div class="r"><span>Jam Input Ext</span><span id="iJamExt">-</span></div>
   </div>
 
-  <div class="field"><label>Nama Operator Thermo</label><input type="text" id="fNamaThermo" placeholder="Nama operator thermo"></div>
+  <div class="field"><label>Nama Operator Thermo</label><select id="fNamaThermo"></select></div>
 
   <button id="btnSave" class="btn" onclick="tfSimpan()">Simpan</button>
   <button id="btnShare" class="btn" onclick="tfShareWa()" disabled>Share WA</button>
@@ -287,6 +287,16 @@ function tfKosongkan(){
 }
 
 document.getElementById('fTanggal').value=tanggalHariIni();
+var OPERATOR_LIST=['Agus','Eka','Ido','Niko'];
+
+function isiOperator(selId){
+  var sel=document.getElementById(selId);
+  sel.innerHTML='<option value="">- pilih -</option>';
+  OPERATOR_LIST.slice().sort(function(a,b){ return a.localeCompare(b,'id'); }).forEach(function(n){
+    var o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o);
+  });
+}
+isiOperator('fNamaThermo');  
 </script>
 </body>
 </html>
