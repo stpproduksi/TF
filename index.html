@@ -105,7 +105,10 @@ var html5QrCode=null;
 
 function setMsg(t,c){ var m=document.getElementById('msg'); m.textContent=t; m.className=c||''; }
 function tanggalHariIni(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function jamSekarang(){ var n=new Date(); return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
+function jamSekarang(){
+  var n=new Date();
+  return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+}
 
 // Cari carsheet di EXT (hanya baris yang belum diambil ke TF), dari hasil scan atau ketik manual
 function tfCari(kode){
