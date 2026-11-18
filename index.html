@@ -385,29 +385,7 @@ function ltCari() {
     }).join('');
   }).catch(function (e) { $('ltBox').innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
 }
-    function daftar(it) {
-      return '<div class="item"><b>' + esc(it.carsheet) + ' | ' + fmtN(it.berat) + ' kg</b><br>' +
-        '<small>' + esc(it.tanggalTxt) + ' ' + esc(it.jam) + ' | Shift ' + esc(it.shift) +
-        ' | ' + esc(it.nama) + '</small></div>';
-    }
 
-    function blok(judul, grup) {
-      var keys = Object.keys(grup).sort();
-      return '<div class="card"><b>' + judul + '</b>' +
-        keys.map(function (k) {
-          return '<div class="r" style="margin-top:8px"><b>' + esc(k) + '</b><b>' + fmtN(grup[k].total) + ' kg</b></div>' +
-            grup[k].rows.map(daftar).join('');
-        }).join('') +
-        '</div>';
-    }
-
-    $('ltBox').innerHTML =
-      '<div class="card"><div class="r"><span>Jumlah carsheet</span><b>' + jumlah + '</b></div>' +
-      '<div class="r"><span>Total berat</span><b>' + fmtN(grand) + ' kg</b></div></div>' +
-      blok('Per Ukuran', grupUk) +
-      blok('Per TF', grupTf);
-  }).catch(function (e) { $('ltBox').innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
-}
 /* ===== INPUT HASIL ===== */
 
 var hState = null, hDraft = null, hCache = [];
