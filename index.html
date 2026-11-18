@@ -8,6 +8,13 @@
 <link rel="icon" type="image/png" sizes="32x32" href="logo-favicon.png">
 <link rel="apple-touch-icon" href="logo-192.png">
 <meta name="theme-color" content="#1D4E89">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./service-worker.js');
+  });
+}
+</script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <style>
