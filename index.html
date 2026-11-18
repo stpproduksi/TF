@@ -360,17 +360,31 @@ function ltCari() {
     if (!res.ok) { $('ltBox').innerHTML = '<div class="bad">' + esc(res.error) + '</div>'; return; }
     if (!res.items.length) { $('ltBox').innerHTML = 'Tidak ada data.'; return; }
 
-    // Kelompokkan per ukuran dan per TF
-    var grupUk = {}, grupTf = {}, grand = 0, jumlah = res.items.length;
+    // Kelompokkan per TF tujuan
+    var grup = {};
     res.items.forEach(function (it) {
-      var uk = it.ukuran || '-', tf = it.untukTf || '-', b = Number(it.berat) || 0;
-      if (!grupUk[uk]) grupUk[uk] = { total: 0, rows: [] };
-      if (!grupTf[tf]) grupTf[tf] = { total: 0, rows: [] };
-      grupUk[uk].total += b; grupUk[uk].rows.push(it);
-      grupTf[tf].total += b; grupTf[tf].rows.push(it);
-      grand += b;
+      var tf = it.untukTf || '-';
+      if (!grup[tf]) grup[tf] = { total: 0, rows: [] };
+      grup[tf].total += Number(it.berat) || 0;
+      grup[tf].rows.push(it);
     });
 
+    $('ltBox').innerHTML = Object.keys(grup).sort().map(function (tf) {
+      var g = grup[tf];
+      return '<div class="card" style="font-family:monospace">' +
+        '<div style="font-size:15px;font-weight:bold;margin-bottom:6px">' + esc(tf) +
+        '&nbsp;&nbsp;&nbsp;' + fmtN(g.total) + ' kg</div>' +
+        g.rows.map(function (it) {
+          return '<div style="margin-top:6px">' +
+            esc(it.ukuran) + ' / ' + fmtN(it.berat) + ' kg<br>' +
+            '<small>' + esc(it.tanggalTxt) + ' ' + esc(it.jam) +
+            ' | Shift ' + esc(it.shift) + ' | ' + esc(it.nama) + '</small>' +
+            '</div>';
+        }).join('') +
+        '</div>';
+    }).join('');
+  }).catch(function (e) { $('ltBox').innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
+}
     function daftar(it) {
       return '<div class="item"><b>' + esc(it.carsheet) + ' | ' + fmtN(it.berat) + ' kg</b><br>' +
         '<small>' + esc(it.tanggalTxt) + ' ' + esc(it.jam) + ' | Shift ' + esc(it.shift) +
