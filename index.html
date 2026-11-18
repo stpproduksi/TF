@@ -81,6 +81,7 @@ if ('serviceWorker' in navigator) {
 <nav>
   <button id="nav_naiktf" onclick="tab('naiktf')">Naik TF</button>
   <button id="nav_hasil" onclick="tab('hasil')">Input Hasil</button>
+  <button id="nav_lihattf" onclick="tab('lihattf')">Lihat TF</button>
   <button class="btn o" onclick="location.reload()">Keluar</button>
 </nav>
 
@@ -145,6 +146,17 @@ if ('serviceWorker' in navigator) {
   </div>
 </section>
 
+<!-- LIHAT TF -->
+<section id="lihattf" class="tab">
+  <div class="card">
+    <label>Tanggal</label><input id="ltTgl" type="date">
+    <label>Shift</label>
+    <select id="ltShift"><option value="">Semua</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+    <button class="btn" onclick="ltCari()">TAMPILKAN</button>
+    <div id="ltBox" style="margin-top:8px"></div>
+  </div>
+</section>
+
 <div id="scanModal"><div id="scanBox">
   <div style="font-weight:bold;text-align:center;margin-bottom:8px">Scan Barcode Carsheet</div>
   <div id="reader"></div>
@@ -191,7 +203,7 @@ function masukPin() {
   api({ action: 'login' }).then(function (r) {
     if (!r.ok) { KEY = ''; $('login_msg').textContent = r.error || 'PIN salah'; return; }
     MENU_USER = r.menu;
-    ['naiktf', 'hasil'].forEach(function (m) { $('nav_' + m).style.display = MENU_USER.indexOf(m) >= 0 ? '' : 'none'; });
+    ['naiktf', 'hasil', 'lihattf'].forEach(function (m) { $('nav_' + m).style.display = MENU_USER.indexOf(m) >= 0 ? '' : 'none'; });
     $('login').style.display = 'none';
     $('pin').value = '';
     $('login_msg').textContent = '';
@@ -202,7 +214,9 @@ function masukPin() {
 function tab(id) {
   document.querySelectorAll('.tab').forEach(function (s) { s.classList.toggle('on', s.id === id); });
   document.querySelectorAll('nav button[id^="nav_"]').forEach(function (b) { b.classList.toggle('on', b.id === 'nav_' + id); });
-  if (id === 'naiktf') tfInit(); else hInit();
+  if (id === 'naiktf') tfInit();
+  else if (id === 'lihattf') ltInit();
+  else hInit();
 }
 
 /* ===== NAIK TF ===== */
@@ -332,6 +346,27 @@ function tfKosongkan() {
   $('tfList').innerHTML = '';
   $('tfShare').disabled = true;
   tfMsg('Form dikosongkan. Scan carsheet untuk input berikutnya.', 'ok');
+}
+
+/* ===== LIHAT TF (hanya membaca) ===== */
+
+function ltInit() { if (!$('ltTgl').value) $('ltTgl').value = hariIni(); }
+
+function ltCari() {
+  var tgl = $('ltTgl').value, shift = $('ltShift').value;
+  if (!tgl) { $('ltBox').innerHTML = '<div class="bad">Tanggal belum dipilih</div>'; return; }
+  $('ltBox').innerHTML = 'Memuat...';
+  api({ action: 'tfFilter', tgl: tgl, shift: shift }).then(function (res) {
+    if (!res.ok) { $('ltBox').innerHTML = '<div class="bad">' + esc(res.error) + '</div>'; return; }
+    if (!res.items.length) { $('ltBox').innerHTML = 'Tidak ada data.'; return; }
+    $('ltBox').innerHTML = '<div class="r"><span>Jumlah baris</span><b>' + res.items.length + '</b></div>' +
+      '<div class="r"><span>Total berat</span><b>' + fmtN(res.total) + ' kg</b></div><hr>' +
+      res.items.map(function (it) {
+        return '<div class="item"><b>' + esc(it.carsheet) + ' | ' + esc(it.ukuran) + ' | ' + fmtN(it.berat) + ' kg</b><br>' +
+          '<small>' + esc(it.tanggalTxt) + ' ' + esc(it.jam) + ' | Shift ' + esc(it.shift) + ' | TF ' + esc(it.untukTf) +
+          ' | Ext ' + esc(it.ext) + ' | ' + esc(it.nama) + '</small></div>';
+      }).join('');
+  }).catch(function (e) { $('ltBox').innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
 }
 
 /* ===== INPUT HASIL ===== */
