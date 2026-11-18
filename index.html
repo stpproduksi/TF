@@ -359,13 +359,33 @@ function ltCari() {
   api({ action: 'tfFilter', tgl: tgl, shift: shift }).then(function (res) {
     if (!res.ok) { $('ltBox').innerHTML = '<div class="bad">' + esc(res.error) + '</div>'; return; }
     if (!res.items.length) { $('ltBox').innerHTML = 'Tidak ada data.'; return; }
-    $('ltBox').innerHTML = '<div class="r"><span>Jumlah baris</span><b>' + res.items.length + '</b></div>' +
-      '<div class="r"><span>Total berat</span><b>' + fmtN(res.total) + ' kg</b></div><hr>' +
-      res.items.map(function (it) {
-        return '<div class="item"><b>' + esc(it.carsheet) + ' | ' + esc(it.ukuran) + ' | ' + fmtN(it.berat) + ' kg</b><br>' +
-          '<small>' + esc(it.tanggalTxt) + ' ' + esc(it.jam) + ' | Shift ' + esc(it.shift) + ' | TF ' + esc(it.untukTf) +
-          ' | Ext ' + esc(it.ext) + ' | ' + esc(it.nama) + '</small></div>';
-      }).join('');
+
+    // Rekap per ukuran dan per TF
+    var perUkuran = {}, perTf = {};
+    res.items.forEach(function (it) {
+      var uk = it.ukuran || '-', tf = it.untukTf || '-';
+      if (!perUkuran[uk]) perUkuran[uk] = { jumlah: 0, berat: 0 };
+      if (!perTf[tf]) perTf[tf] = { jumlah: 0, berat: 0 };
+      perUkuran[uk].jumlah++; perUkuran[uk].berat += Number(it.berat) || 0;
+      perTf[tf].jumlah++;     perTf[tf].berat += Number(it.berat) || 0;
+    });
+
+    function tabel(judul, obj) {
+      var keys = Object.keys(obj).sort();
+      return '<div class="card"><b>' + judul + '</b>' +
+        '<table style="min-width:0"><thead><tr><th>' + judul.replace('Per ', '') + '</th><th>Carsheet</th><th style="text-align:right">Berat (kg)</th></tr></thead><tbody>' +
+        keys.map(function (k) {
+          return '<tr><td><b>' + esc(k) + '</b></td><td>' + obj[k].jumlah + '</td><td style="text-align:right">' + fmtN(obj[k].berat) + '</td></tr>';
+        }).join('') +
+        '</tbody></table></div>';
+    }
+
+    var totalBerat = res.items.reduce(function (s, it) { return s + (Number(it.berat) || 0); }, 0);
+    $('ltBox').innerHTML =
+      '<div class="card"><div class="r"><span>Jumlah carsheet</span><b>' + res.items.length + '</b></div>' +
+      '<div class="r"><span>Total berat</span><b>' + fmtN(totalBerat) + ' kg</b></div></div>' +
+      tabel('Per Ukuran', perUkuran) +
+      tabel('Per TF', perTf);
   }).catch(function (e) { $('ltBox').innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
 }
 
