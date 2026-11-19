@@ -353,26 +353,6 @@ function tfKosongkan() {
 function ltInit() { if (!$('ltTgl').value) $('ltTgl').value = hariIni(); }
 
 function ltCari() {
-  var ltRekap = '';
-
-function ltBuatTeks(tgl, shift, grup, grand, jumlah) {
-  var t = '📊 LAPORAN NAIK TF\nTanggal: ' + tglIndo(tgl) + ' | Shift: ' + (shift || 'Semua') + '\n';
-  Object.keys(grup).sort().forEach(function (tf) {
-    var g = grup[tf];
-    t += '\n' + tf + '  ' + fmtN(g.total) + ' kg\n';
-    g.rows.forEach(function (it) {
-      t += it.ukuran + ' / ' + fmtN(it.berat) + ' kg\n' +
-        it.tanggalTxt + ' ' + it.jam + ' | Shift ' + it.shift + ' | ' + it.nama + '\n';
-    });
-  });
-  t += '\nTOTAL  ' + fmtN(grand) + ' kg (' + jumlah + ' carsheet)';
-  return t;
-}
-
-function ltShareWa() {
-  if (!ltRekap) { alert('Tampilkan data dulu'); return; }
-  window.open('https://wa.me/?text=' + encodeURIComponent(ltRekap), '_blank');
-}
   var tgl = $('ltTgl').value, shift = $('ltShift').value;
   if (!tgl) { $('ltBox').innerHTML = '<div class="bad">Tanggal belum dipilih</div>'; return; }
   $('ltBox').innerHTML = 'Memuat...';
@@ -412,6 +392,26 @@ function ltShareWa() {
     ltRekap = ltBuatTeks($('ltTgl').value, $('ltShift').value, grup, grand, res.items.length);
     html += '<button class="btn wa" onclick="ltShareWa()">Share WA</button>';
   }).catch(function (e) { $('ltBox').innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
+}
+var ltRekap = '';
+
+function ltBuatTeks(tgl, shift, grup, grand, jumlah) {
+  var t = '📊 LAPORAN NAIK TF\nTanggal: ' + tglIndo(tgl) + ' | Shift: ' + (shift || 'Semua') + '\n';
+  Object.keys(grup).sort().forEach(function (tf) {
+    var g = grup[tf];
+    t += '\n' + tf + '  ' + fmtN(g.total) + ' kg\n';
+    g.rows.forEach(function (it) {
+      t += it.ukuran + ' / ' + fmtN(it.berat) + ' kg\n' +
+        it.tanggalTxt + ' ' + it.jam + ' | Shift ' + it.shift + ' | ' + it.nama + '\n';
+    });
+  });
+  t += '\nTOTAL  ' + fmtN(grand) + ' kg (' + jumlah + ' carsheet)';
+  return t;
+}
+
+function ltShareWa() {
+  if (!ltRekap) { alert('Tampilkan data dulu'); return; }
+  window.open('https://wa.me/?text=' + encodeURIComponent(ltRekap), '_blank');
 }
 /* ===== INPUT HASIL ===== */
 
