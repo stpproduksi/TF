@@ -357,6 +357,8 @@ function ltCari() {
   if (!tgl) { $('ltBox').innerHTML = '<div class="bad">Tanggal belum dipilih</div>'; return; }
   $('ltBox').innerHTML = 'Memuat...';
   api({ action: 'tfFilter', tgl: tgl, shift: shift }).then(function (res) {
+    ltRekap = ltBuatTeks($('ltTgl').value, $('ltShift').value, grup, grand, res.items.length);
+    html += '<button class="btn wa" onclick="ltShareWa()">Share WA</button>';
     if (!res.ok) { $('ltBox').innerHTML = '<div class="bad">' + esc(res.error) + '</div>'; return; }
     if (!res.items.length) { $('ltBox').innerHTML = 'Tidak ada data.'; return; }
 
@@ -389,11 +391,9 @@ function ltCari() {
       '<small style="font-weight:normal">' + res.items.length + ' carsheet</small></div>';
 
     $('ltBox').innerHTML = html;
-    ltRekap = ltBuatTeks($('ltTgl').value, $('ltShift').value, grup, grand, res.items.length);
-    html += '<button class="btn wa" onclick="ltShareWa()">Share WA</button>';
   }).catch(function (e) { $('ltBox').innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
 }
-var ltRekap = '';
+  var ltRekap = '';
 
 function ltBuatTeks(tgl, shift, grup, grand, jumlah) {
   var t = '📊 LAPORAN NAIK TF\nTanggal: ' + tglIndo(tgl) + ' | Shift: ' + (shift || 'Semua') + '\n';
