@@ -77,7 +77,7 @@ if ('serviceWorker' in navigator) {
   <div id="login_msg" class="bad" style="margin-top:10px"></div>
 </div>
 
-<h1>THERMO STP</h1>
+<h1>THERMO FORMING</h1>
 <nav>
   <button id="nav_naiktf" onclick="tab('naiktf')">Naik TF</button>
   <button id="nav_hasil" onclick="tab('hasil')">Input Hasil</button>
@@ -398,7 +398,7 @@ function ltCari() {
 }
 
 function ltBuatTeks(tgl, shift, grup, grand, jumlah) {
-  var t = '📊 LAPORAN NAIK TF\nTanggal: ' + tglIndo(tgl) + ' | Shift: ' + (shift || 'Semua') + '\n';
+  var t = '📊 LAP. SHEET NAIK TF\nTanggal: ' + tglIndo(tgl) + ' | Shift: ' + (shift || 'Semua') + '\n';
   Object.keys(grup).sort().forEach(function (tf) {
     var g = grup[tf];
     t += '\n' + tf + '  ' + fmtN(g.total) + ' kg\n';
