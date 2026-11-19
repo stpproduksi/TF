@@ -350,6 +350,8 @@ function tfKosongkan() {
 
 /* ===== LIHAT TF (hanya membaca) ===== */
 
+var ltRekap = '';
+
 function ltInit() { if (!$('ltTgl').value) $('ltTgl').value = hariIni(); }
 
 function ltCari() {
@@ -357,8 +359,6 @@ function ltCari() {
   if (!tgl) { $('ltBox').innerHTML = '<div class="bad">Tanggal belum dipilih</div>'; return; }
   $('ltBox').innerHTML = 'Memuat...';
   api({ action: 'tfFilter', tgl: tgl, shift: shift }).then(function (res) {
-    ltRekap = ltBuatTeks($('ltTgl').value, $('ltShift').value, grup, grand, res.items.length);
-    html += '<button class="btn wa" onclick="ltShareWa()">Share WA</button>';
     if (!res.ok) { $('ltBox').innerHTML = '<div class="bad">' + esc(res.error) + '</div>'; return; }
     if (!res.items.length) { $('ltBox').innerHTML = 'Tidak ada data.'; return; }
 
@@ -390,10 +390,12 @@ function ltCari() {
       'TOTAL&nbsp;&nbsp;&nbsp;' + fmtN(grand) + ' kg<br>' +
       '<small style="font-weight:normal">' + res.items.length + ' carsheet</small></div>';
 
+    ltRekap = ltBuatTeks($('ltTgl').value, $('ltShift').value, grup, grand, res.items.length);
+    html += '<button class="btn wa" onclick="ltShareWa()">Share WA</button>';
+
     $('ltBox').innerHTML = html;
   }).catch(function (e) { $('ltBox').innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
 }
-  var ltRekap = '';
 
 function ltBuatTeks(tgl, shift, grup, grand, jumlah) {
   var t = '📊 LAPORAN NAIK TF\nTanggal: ' + tglIndo(tgl) + ' | Shift: ' + (shift || 'Semua') + '\n';
@@ -413,6 +415,7 @@ function ltShareWa() {
   if (!ltRekap) { alert('Tampilkan data dulu'); return; }
   window.open('https://wa.me/?text=' + encodeURIComponent(ltRekap), '_blank');
 }
+
 /* ===== INPUT HASIL ===== */
 
 var hState = null, hDraft = null, hCache = [];
