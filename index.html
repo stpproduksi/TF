@@ -357,7 +357,7 @@ function ltInit() { if (!$('ltTgl').value) $('ltTgl').value = hariIni(); }
 function ltKelompok(items){
   var kr={};
   items.forEach(function(it){
-    var n=it.nama||'-', g=it.untukTf||'-', b=Number(it.berat)||0;
+    var n=it.thermo||'-', g=it.untukTf||'-', b=Number(it.berat)||0;
     if(!kr[n]) kr[n]={total:0, count:0, grup:{}};
     if(!kr[n].grup[g]) kr[n].grup[g]={total:0, rows:[]};
     kr[n].total+=b; kr[n].count++;
@@ -365,7 +365,6 @@ function ltKelompok(items){
   });
   return kr;
 }
-
 function ltBuatTeks(tgl, shift, kr, grand, jumlah){
   var t='📊 LAP. SHEET NAIK TF\nTanggal: '+tglIndo(tgl)+' | Shift: '+(shift||'Semua')+'\n';
   Object.keys(kr).sort().forEach(function(n){
