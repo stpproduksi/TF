@@ -146,7 +146,7 @@ if ('serviceWorker' in navigator) {
   </div>
 </section>
 
-<!-- LIHAT TF -->
+<!-- RINCIAN NAIK TF -->
 <section id="lihattf" class="tab">
   <div class="card">
     <label>Tanggal</label><input id="ltTgl" type="date">
@@ -348,11 +348,60 @@ function tfKosongkan() {
   tfMsg('Form dikosongkan. Scan carsheet untuk input berikutnya.', 'ok');
 }
 
-/* ===== LIHAT TF (hanya membaca) ===== */
+/* ===== RINCIAN NAIK TF (hanya membaca) ===== */
 
 var ltRekap = '';
 
 function ltInit() { if (!$('ltTgl').value) $('ltTgl').value = hariIni(); }
+
+function ltKelompok(items){
+  var kr={};
+  items.forEach(function(it){
+    var n=it.nama||'-', g=it.untukTf||'-', b=Number(it.berat)||0;
+    if(!kr[n]) kr[n]={total:0, count:0, grup:{}};
+    if(!kr[n].grup[g]) kr[n].grup[g]={total:0, rows:[]};
+    kr[n].total+=b; kr[n].count++;
+    kr[n].grup[g].total+=b; kr[n].grup[g].rows.push(it);
+  });
+  return kr;
+}
+
+function ltBuatTeks(tgl, shift, kr, grand, jumlah){
+  var t='📊 LAP. SHEET NAIK TF\nTanggal: '+tglIndo(tgl)+' | Shift: '+(shift||'Semua')+'\n';
+  Object.keys(kr).sort().forEach(function(n){
+    var k=kr[n];
+    t+='\nKR '+n+'\nTOTAL '+fmtN(k.total)+' kg\n'+k.count+' carsheet\n';
+    Object.keys(k.grup).sort().forEach(function(g){
+      var gr=k.grup[g];
+      t+='\n'+g+'   '+fmtN(gr.total)+' kg\n';
+      gr.rows.forEach(function(it){ t+=it.ukuran+' / '+fmtN(it.berat)+' kg\n'; });
+    });
+    t+='\n';
+  });
+  t+='GRAND TOTAL '+fmtN(grand)+' kg ('+jumlah+' carsheet)';
+  return t;
+}
+
+function ltHtml(kr, grand, jumlah){
+  var h=Object.keys(kr).sort().map(function(n){
+    var k=kr[n];
+    var grp=Object.keys(k.grup).sort().map(function(g){
+      var gr=k.grup[g];
+      return '<div style="margin-top:8px"><b>'+esc(g)+'&nbsp;&nbsp;&nbsp;'+fmtN(gr.total)+' kg</b></div>'+
+        gr.rows.map(function(it){
+          return '<div>'+esc(it.ukuran)+' / '+fmtN(it.berat)+' kg</div>';
+        }).join('');
+    }).join('');
+    return '<div class="card" style="font-family:monospace">'+
+      '<div style="font-size:15px;font-weight:bold">KR '+esc(n)+'</div>'+
+      '<div style="font-weight:bold">TOTAL&nbsp;&nbsp;&nbsp;'+fmtN(k.total)+' kg</div>'+
+      '<div style="font-size:12px;color:#5B6472">'+k.count+' carsheet</div>'+
+      grp+'</div>';
+  }).join('');
+  return h+'<div class="card" style="font-family:monospace;font-size:15px;font-weight:bold">'+
+    'GRAND TOTAL&nbsp;&nbsp;&nbsp;'+fmtN(grand)+' kg<br>'+
+    '<small style="font-weight:normal">'+jumlah+' carsheet</small></div>';
+}
 
 function ltCari() {
   var tgl = $('ltTgl').value, shift = $('ltShift').value;
@@ -361,54 +410,12 @@ function ltCari() {
   api({ action: 'tfFilter', tgl: tgl, shift: shift }).then(function (res) {
     if (!res.ok) { $('ltBox').innerHTML = '<div class="bad">' + esc(res.error) + '</div>'; return; }
     if (!res.items.length) { $('ltBox').innerHTML = 'Tidak ada data.'; return; }
-
-    var grup = {}, grand = 0;
-    res.items.forEach(function (it) {
-      var tf = it.untukTf || '-', b = Number(it.berat) || 0;
-      if (!grup[tf]) grup[tf] = { total: 0, rows: [] };
-      grup[tf].total += b;
-      grup[tf].rows.push(it);
-      grand += b;
-    });
-
-    var html = Object.keys(grup).sort().map(function (tf) {
-      var g = grup[tf];
-      return '<div class="card" style="font-family:monospace">' +
-        '<div style="font-size:15px;font-weight:bold;margin-bottom:6px">' + esc(tf) +
-        '&nbsp;&nbsp;&nbsp;' + fmtN(g.total) + ' kg</div>' +
-        g.rows.map(function (it) {
-          return '<div style="margin-top:6px">' +
-            esc(it.ukuran) + ' / ' + fmtN(it.berat) + ' kg<br>' +
-            '<small>' + esc(it.tanggalTxt) + ' ' + esc(it.jam) +
-            ' | Shift ' + esc(it.shift) + ' | ' + esc(it.nama) + '</small>' +
-            '</div>';
-        }).join('') +
-        '</div>';
-    }).join('');
-
-    html += '<div class="card" style="font-family:monospace;font-size:15px;font-weight:bold">' +
-      'TOTAL&nbsp;&nbsp;&nbsp;' + fmtN(grand) + ' kg<br>' +
-      '<small style="font-weight:normal">' + res.items.length + ' carsheet</small></div>';
-
-    ltRekap = ltBuatTeks($('ltTgl').value, $('ltShift').value, grup, grand, res.items.length);
-    html += '<button class="btn wa" onclick="ltShareWa()">Share WA</button>';
-
-    $('ltBox').innerHTML = html;
+    var kr = ltKelompok(res.items), grand = 0;
+    res.items.forEach(function (it) { grand += Number(it.berat) || 0; });
+    ltRekap = ltBuatTeks(tgl, shift, kr, grand, res.items.length);
+    $('ltBox').innerHTML = ltHtml(kr, grand, res.items.length) +
+      '<button class="btn wa" onclick="ltShareWa()">Share WA</button>';
   }).catch(function (e) { $('ltBox').innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
-}
-
-function ltBuatTeks(tgl, shift, grup, grand, jumlah) {
-  var t = '📊 LAP. SHEET NAIK TF\nTanggal: ' + tglIndo(tgl) + ' | Shift: ' + (shift || 'Semua') + '\n';
-  Object.keys(grup).sort().forEach(function (tf) {
-    var g = grup[tf];
-    t += '\n' + tf + '  ' + fmtN(g.total) + ' kg\n';
-    g.rows.forEach(function (it) {
-      t += it.ukuran + ' / ' + fmtN(it.berat) + ' kg\n' +
-        it.tanggalTxt + ' ' + it.jam + ' | Shift ' + it.shift + ' | ' + it.nama + '\n';
-    });
-  });
-  t += '\nTOTAL  ' + fmtN(grand) + ' kg (' + jumlah + ' carsheet)';
-  return t;
 }
 
 function ltShareWa() {
