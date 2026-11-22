@@ -1,6 +1,6 @@
 {
-  "name": "Input Thermo",
-  "short_name": "Input Thermo",
+  "name": "TF",
+  "short_name": "*STP*",
   "description": "Input data Thermo berdasarkan batch hasil Extruder",
   "start_url": "./index.html",
   "scope": "./",
