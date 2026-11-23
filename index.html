@@ -82,6 +82,9 @@ if ('serviceWorker' in navigator) {
   <button id="nav_naiktf" onclick="tab('naiktf')">Naik TF</button>
   <button id="nav_hasil" onclick="tab('hasil')">Input Hasil</button>
   <button id="nav_lihattf" onclick="tab('lihattf')">Rincian naik TF</button>
+  <button id="nav_edittf" onclick="tab('edittf')">Edit TF</button>
+  <button id="nav_hapustf" onclick="tab('hapustf')">Hapus TF</button>
+  <button id="nav_hapusfg" onclick="tab('hapusfg')">Hapus FG</button>
   <button class="btn o" onclick="location.reload()">Keluar</button>
 </nav>
 
@@ -157,6 +160,63 @@ if ('serviceWorker' in navigator) {
   </div>
 </section>
 
+<!-- EDIT TF -->
+<section id="edittf" class="tab">
+  <div class="card">
+    <div class="row2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><label>Tanggal</label><input id="etTgl" type="date"></div>
+      <div><label>Shift</label>
+        <select id="etShift"><option value="">Semua</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+      </div>
+    </div>
+    <button class="btn" onclick="etCari()">TAMPILKAN</button>
+    <div id="etList" style="margin-top:8px"></div>
+
+    <div id="etForm" style="display:none;border-top:2px solid #1D4E89;margin-top:12px;padding-top:12px">
+      <b>Edit data TF</b>
+      <input type="hidden" id="etRow">
+      <input type="hidden" id="etCsAsli">
+      <div id="etInfo" style="margin-top:8px"></div>
+      <div class="row2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label>Tanggal</label><input id="etfTgl" type="date"></div>
+        <div><label>Jam TF</label><input id="etfJam" type="time"></div>
+      </div>
+      <div class="row2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label>Shift</label><select id="etfShift"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+        <div><label>Untuk TF</label><select id="etfTf"></select></div>
+      </div>
+      <label>Nama Operator Thermo</label><select id="etfNama"></select>
+      <button class="btn g" onclick="etSimpan()">SIMPAN PERUBAHAN</button>
+      <button class="btn o" onclick="etBatal()">Batal</button>
+      <div id="etMsg" style="margin-top:8px;font-size:13px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- HAPUS TF -->
+<section id="hapustf" class="tab">
+  <div class="card">
+    <label>Tanggal</label><input id="htfTgl" type="date">
+    <label>Shift</label>
+    <select id="htfShift"><option value="">Semua</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+    <button class="btn" onclick="htfTampil()">TAMPILKAN</button>
+    <div id="htfMsg" style="margin-top:8px;font-size:13px"></div>
+    <div id="htfList" style="margin-top:8px"></div>
+  </div>
+</section>
+
+<!-- HAPUS FG -->
+<section id="hapusfg" class="tab">
+  <div class="card">
+    <label>Tanggal</label><input id="hfgTgl" type="date">
+    <label>Shift</label>
+    <select id="hfgShift"><option value="">Semua</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+    <button class="btn" onclick="hfgTampil()">TAMPILKAN</button>
+    <div id="hfgMsg" style="margin-top:8px;font-size:13px"></div>
+    <div id="hfgList" style="margin-top:8px"></div>
+  </div>
+</section>
+
 <div id="scanModal"><div id="scanBox">
   <div style="font-weight:bold;text-align:center;margin-bottom:8px">Scan Barcode Carsheet</div>
   <div id="reader"></div>
@@ -203,7 +263,7 @@ function masukPin() {
   api({ action: 'login' }).then(function (r) {
     if (!r.ok) { KEY = ''; $('login_msg').textContent = r.error || 'PIN salah'; return; }
     MENU_USER = r.menu;
-    ['naiktf', 'hasil', 'lihattf'].forEach(function (m) { $('nav_' + m).style.display = MENU_USER.indexOf(m) >= 0 ? '' : 'none'; });
+    ['naiktf', 'hasil', 'lihattf', 'edittf', 'hapustf', 'hapusfg'].forEach(function (m) { $('nav_' + m).style.display = MENU_USER.indexOf(m) >= 0 ? '' : 'none'; });
     $('login').style.display = 'none';
     $('pin').value = '';
     $('login_msg').textContent = '';
@@ -216,6 +276,9 @@ function tab(id) {
   document.querySelectorAll('nav button[id^="nav_"]').forEach(function (b) { b.classList.toggle('on', b.id === 'nav_' + id); });
   if (id === 'naiktf') tfInit();
   else if (id === 'lihattf') ltInit();
+  else if (id === 'edittf') etInit();
+  else if (id === 'hapustf') { if (!$('htfTgl').value) $('htfTgl').value = hariIni(); }
+  else if (id === 'hapusfg') { if (!$('hfgTgl').value) $('hfgTgl').value = hariIni(); }
   else hInit();
 }
 
@@ -365,6 +428,7 @@ function ltKelompok(items){
   });
   return kr;
 }
+
 function ltBuatTeks(tgl, shift, kr, grand, jumlah){
   var t='📊 LAP. SHEET NAIK TF\nTanggal: '+tglIndo(tgl)+' | Shift: '+(shift||'Semua')+'\n';
   Object.keys(kr).sort().forEach(function(n){
@@ -420,6 +484,166 @@ function ltCari() {
 function ltShareWa() {
   if (!ltRekap) { alert('Tampilkan data dulu'); return; }
   window.open('https://wa.me/?text=' + encodeURIComponent(ltRekap), '_blank');
+}
+
+/* ===== EDIT TF ===== */
+
+var ET_CACHE = [];
+
+function etInit() { if (!$('etTgl').value) $('etTgl').value = hariIni(); }
+
+function etIsiTf(nilai) {
+  var l = TF_LIST.slice();
+  if (nilai && l.indexOf(nilai) === -1) l.push(nilai);
+  $('etfTf').innerHTML = '<option value="">- pilih -</option>' + l.map(function (v) {
+    return '<option value="' + esc(v) + '"' + (v === nilai ? ' selected' : '') + '>' + esc(v) + '</option>';
+  }).join('');
+}
+
+function etIsiThermo(nilai) {
+  var l = TF_THERMO.slice();
+  if (nilai && l.indexOf(nilai) === -1) l.push(nilai);
+  $('etfNama').innerHTML = '<option value="">- pilih -</option>' + l.sort(function (a, b) { return a.localeCompare(b, 'id'); }).map(function (v) {
+    return '<option value="' + esc(v) + '"' + (v === nilai ? ' selected' : '') + '>' + esc(v) + '</option>';
+  }).join('');
+}
+
+function etCari() {
+  var tgl = $('etTgl').value, shift = $('etShift').value;
+  var box = $('etList');
+  if (!tgl) { box.innerHTML = '<div class="bad">Tanggal belum dipilih</div>'; return; }
+  box.innerHTML = 'Memuat...';
+  $('etForm').style.display = 'none';
+  api({ action: 'tfEditList', tgl: tgl, shift: shift }).then(function (res) {
+    if (!res.ok) { box.innerHTML = '<div class="bad">' + esc(res.error) + '</div>'; return; }
+    ET_CACHE = res.items || [];
+    if (!ET_CACHE.length) { box.innerHTML = 'Tidak ada data.'; return; }
+    box.innerHTML = ET_CACHE.map(function (it, idx) {
+      return '<div class="item"><b>' + esc(it.carsheet) + ' | ' + esc(it.ukuran) + ' | ' + fmtN(it.berat) + ' kg</b><br>' +
+        '<small>TF ' + esc(it.untukTf) + ' | ' + esc(it.tanggalTxt) + ' ' + esc(it.jam) +
+        ' | Shift ' + esc(it.shift) + ' | KR ' + esc(it.nama) + '</small><br>' +
+        '<button class="btn o" style="margin-top:6px" onclick="etPilih(' + idx + ')">✏️ Edit</button></div>';
+    }).join('');
+  }).catch(function (e) { box.innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
+}
+
+function etPilih(idx) {
+  var it = ET_CACHE[idx];
+  if (!it) return;
+  $('etRow').value = it.row;
+  $('etCsAsli').value = it.carsheet;
+  $('etInfo').innerHTML =
+    '<div class="r"><span>Carsheet</span><b>' + esc(it.carsheet) + '</b></div>' +
+    '<div class="r"><span>Ukuran</span><b>' + esc(it.ukuran) + '</b></div>' +
+    '<div class="r"><span>Berat</span><b>' + fmtN(it.berat) + ' kg</b></div>' +
+    '<div class="r"><span>Ext</span><b>' + esc(it.ext) + '</b></div>' +
+    '<div class="r"><span>Nama Ext</span><b>' + esc(it.namaExt) + '</b></div>' +
+    '<div class="r"><span>Jam Input Ext</span><b>' + esc(it.jamExt) + '</b></div>';
+  $('etfTgl').value = it.tanggal;
+  $('etfJam').value = it.jam;
+  $('etfShift').value = it.shift;
+  etIsiTf(it.untukTf);
+  etIsiThermo(it.nama);
+  $('etMsg').textContent = '';
+  $('etForm').style.display = 'block';
+  $('etForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function etBatal() {
+  $('etForm').style.display = 'none';
+  $('etMsg').textContent = '';
+}
+
+function etSimpan() {
+  var msg = $('etMsg');
+  var d = {
+    row: $('etRow').value,
+    carsheet: $('etCsAsli').value,
+    tanggal: $('etfTgl').value,
+    jam: $('etfJam').value,
+    shift: $('etfShift').value,
+    untukTf: $('etfTf').value,
+    namaThermo: $('etfNama').value
+  };
+  if (!d.tanggal || !d.jam || !d.shift || !d.untukTf || !d.namaThermo) {
+    msg.className = 'bad'; msg.textContent = 'Semua kolom wajib diisi.'; return;
+  }
+  msg.className = ''; msg.textContent = 'Menyimpan...';
+  api({ action: 'tfEditSimpan', payload: JSON.stringify(d) }).then(function (res) {
+    if (res.ok) {
+      msg.className = 'ok'; msg.textContent = '✅ Perubahan tersimpan.';
+      $('etForm').style.display = 'none';
+      etCari();
+    } else {
+      msg.className = 'bad'; msg.textContent = '❌ Gagal: ' + (res.error || 'tidak diketahui');
+    }
+  }).catch(function (e) { msg.className = 'bad'; msg.textContent = '❌ Gagal: ' + e.message; });
+}
+
+/* ===== HAPUS TF ===== */
+
+var HTF_CACHE = [], HFG_CACHE = [];
+
+function htfTampil() {
+  var tgl = $('htfTgl').value, shift = $('htfShift').value;
+  var box = $('htfList');
+  $('htfMsg').textContent = '';
+  if (!tgl) { box.innerHTML = '<div class="bad">Tanggal belum dipilih</div>'; return; }
+  box.innerHTML = 'Memuat...';
+  api({ action: 'tfEditList', tgl: tgl, shift: shift }).then(function (res) {
+    if (!res.ok) { box.innerHTML = '<div class="bad">' + esc(res.error) + '</div>'; return; }
+    HTF_CACHE = res.items || [];
+    if (!HTF_CACHE.length) { box.innerHTML = 'Tidak ada data.'; return; }
+    box.innerHTML = HTF_CACHE.map(function (it, idx) {
+      return '<div class="item"><b>' + esc(it.carsheet) + ' | ' + esc(it.ukuran) + ' | ' + fmtN(it.berat) + ' kg</b><br>' +
+        '<small>TF ' + esc(it.untukTf) + ' | ' + esc(it.tanggalTxt) + ' ' + esc(it.jam) +
+        ' | Shift ' + esc(it.shift) + ' | KR ' + esc(it.nama) + '</small><br>' +
+        '<button class="btn br" style="margin-top:6px" onclick="htfHapus(' + idx + ')">🗑 Hapus</button></div>';
+    }).join('');
+  }).catch(function (e) { box.innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
+}
+
+function htfHapus(idx) {
+  var it = HTF_CACHE[idx];
+  if (!it) return;
+  if (!confirm('Hapus TF carsheet ' + it.carsheet + ' (' + it.ukuran + ', ' + fmtN(it.berat) + ' kg)? EXT-nya akan bisa diambil lagi.')) return;
+  $('htfMsg').className = ''; $('htfMsg').textContent = 'Menghapus...';
+  api({ action: 'tfHapus', payload: JSON.stringify({ row: it.row, carsheet: it.carsheet }) }).then(function (res) {
+    if (res.ok) { $('htfMsg').className = 'ok'; $('htfMsg').textContent = '✅ Data TF dihapus.'; htfTampil(); }
+    else { $('htfMsg').className = 'bad'; $('htfMsg').textContent = '❌ Gagal: ' + (res.error || 'tidak diketahui'); }
+  }).catch(function (e) { $('htfMsg').className = 'bad'; $('htfMsg').textContent = '❌ Gagal: ' + e.message; });
+}
+
+/* ===== HAPUS FG ===== */
+
+function hfgTampil() {
+  var tgl = $('hfgTgl').value, shift = $('hfgShift').value;
+  var box = $('hfgList');
+  $('hfgMsg').textContent = '';
+  if (!tgl) { box.innerHTML = '<div class="bad">Tanggal belum dipilih</div>'; return; }
+  box.innerHTML = 'Memuat...';
+  api({ action: 'fgHapusList', tgl: tgl, shift: shift }).then(function (res) {
+    if (!res.ok) { box.innerHTML = '<div class="bad">' + esc(res.error) + '</div>'; return; }
+    HFG_CACHE = res.items || [];
+    if (!HFG_CACHE.length) { box.innerHTML = 'Tidak ada data.'; return; }
+    box.innerHTML = HFG_CACHE.map(function (it, idx) {
+      return '<div class="item"><b>' + esc(it.palet) + '</b><br>' +
+        '<small>' + esc(it.namaProduk) + ' | Qty ' + fmtN(it.qty) + ' | TF ' + esc(it.tf) + '<br>' +
+        esc(it.jam) + ' | Shift ' + esc(it.shift) + ' | KR ' + esc(it.nama) + '</small><br>' +
+        '<button class="btn br" style="margin-top:6px" onclick="hfgHapus(' + idx + ')">🗑 Hapus</button></div>';
+    }).join('');
+  }).catch(function (e) { box.innerHTML = '<div class="bad">Gagal: ' + esc(e.message) + '</div>'; });
+}
+
+function hfgHapus(idx) {
+  var it = HFG_CACHE[idx];
+  if (!it) return;
+  if (!confirm('Hapus palet ' + it.palet + ' (' + it.namaProduk + ', Qty ' + fmtN(it.qty) + ')? Data tidak bisa dikembalikan.')) return;
+  $('hfgMsg').className = ''; $('hfgMsg').textContent = 'Menghapus...';
+  api({ action: 'fgHapus', payload: JSON.stringify({ row: it.row, palet: it.palet }) }).then(function (res) {
+    if (res.ok) { $('hfgMsg').className = 'ok'; $('hfgMsg').textContent = '✅ Palet dihapus.'; hfgTampil(); }
+    else { $('hfgMsg').className = 'bad'; $('hfgMsg').textContent = '❌ Gagal: ' + (res.error || 'tidak diketahui'); }
+  }).catch(function (e) { $('hfgMsg').className = 'bad'; $('hfgMsg').textContent = '❌ Gagal: ' + e.message; });
 }
 
 /* ===== INPUT HASIL ===== */
