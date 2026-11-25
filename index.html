@@ -31,6 +31,7 @@ if ('serviceWorker' in navigator) {
   .btn:disabled{opacity:.5}
   .btn.g{background:#157F3C}.btn.o{background:#fff;color:#1D4E89;border:1px solid #1D4E89}
   .btn.wa{background:#25D366}.btn.br{background:#B45309}
+  .btn.bt{background:#0F766E}
   .r{display:flex;justify-content:space-between;padding:3px 0;font-size:13px}
   .r b{font-family:monospace}
   .item{display:block;width:100%;text-align:left;padding:10px;border:1px solid #E3E6EA;border-radius:8px;background:#fff;margin-bottom:6px;font-size:13px}
@@ -136,6 +137,7 @@ if ('serviceWorker' in navigator) {
     <button class="btn o" onclick="hTambahBaris()">+ Tambah baris</button>
   </div>
   <div id="hPallet"></div>
+  <button class="btn bt" onclick="pilihPrinter()">🔵 Pilih Printer Bluetooth</button>
   <button class="btn g" id="hSave" onclick="hSimpan()">Simpan</button>
   <button class="btn br" id="hPrint" onclick="hCetak()" disabled>Cetak</button>
   <button class="btn wa" id="hShare" onclick="hShareWa()" disabled>Share WA</button>
@@ -834,9 +836,140 @@ function hCetakLabels(items, ulang) {
   setTimeout(function () { window.print(); }, 300);
 }
 
+/* ===== PRINT BARU - WEB BLUETOOTH + BARCODE - SAMA KAYAK KITIR EXT ===== */
+
+function hBuatRawTextFG(it, ulang){
+  var gramTxt = (it.gram !== '' && it.gram !== null && it.gram !== undefined) ? 'Gram: ' + fmtN(it.gram) + '\n' : '';
+  return "STP\n" +
+    "HASIL PRODUKSI FG\n" +
+    (ulang ? "** CETAK ULANG **\n" : "") +
+    "No. Palet: " + it.palet + "\n" +
+    "--------------------------------\n" +
+    it.produk + "\n" +
+    fmtN(it.qty) + " Box\n" +
+    gramTxt +
+    it.tf + "\n" +
+    "--------------------------------\n" +
+    tglIndo(it.tanggal) + " " + it.jam + "  SHIFT " + it.shift + "\n" +
+    "Operator: " + it.nama + "\n" +
+    "\n";
+}
+
+var printerDevice = null;
+var printerCharacteristic = null;
+
+async function pilihPrinter(){
+  if(!navigator.bluetooth){
+    hMsg('HP / browser ini tidak dukung Web Bluetooth. Buka lewat Chrome Android.', 'bad');
+    return;
+  }
+  try{
+    hMsg('Mencari printer...', '');
+    printerDevice = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb','0000ff00-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb']
+    });
+    var server = await printerDevice.gatt.connect();
+    var services = await server.getPrimaryServices();
+    printerCharacteristic = null;
+    for(var s of services){
+      var chars = await s.getCharacteristics();
+      for(var c of chars){
+        if(c.properties.write || c.properties.writeWithoutResponse){ printerCharacteristic = c; break; }
+      }
+      if(printerCharacteristic) break;
+    }
+    if(!printerCharacteristic) throw new Error('Characteristic print tidak ketemu di printer ini');
+    printerDevice.addEventListener('gattserverdisconnected', function(){ printerCharacteristic=null; });
+    hMsg('Printer tersambung: ' + printerDevice.name, 'ok');
+  }catch(e){
+    hMsg('Gagal pilih printer: ' + e.message, 'bad');
+  }
+}
+
+async function autoSambungPrinter(){
+  try{
+    if(!navigator.bluetooth || !navigator.bluetooth.getDevices) return false;
+    var devices = await navigator.bluetooth.getDevices();
+    if(!devices.length) return false;
+    printerDevice = devices[0];
+    var server = await printerDevice.gatt.connect();
+    var services = await server.getPrimaryServices();
+    printerCharacteristic = null;
+    for(var s of services){
+      var chars = await s.getCharacteristics();
+      for(var c of chars){
+        if(c.properties.write || c.properties.writeWithoutResponse){ printerCharacteristic = c; break; }
+      }
+      if(printerCharacteristic) break;
+    }
+    if(printerCharacteristic){
+      printerDevice.addEventListener('gattserverdisconnected', function(){ printerCharacteristic=null; });
+      hMsg('Printer otomatis tersambung: ' + printerDevice.name, 'ok');
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+function buildPrintBytesFG(items, ulang){
+  var enc = new TextEncoder();
+  var parts = [];
+  var total = 2;
+  items.forEach(function(it){
+    var teksBytes = enc.encode(hBuatRawTextFG(it, ulang));
+    var code = String(it.palet).trim();
+    var setting = new Uint8Array([0x1B,0x61,0x01, 0x1D,0x68,60, 0x1D,0x77,2, 0x1D,0x48,2]);
+    var barcodeHead = new Uint8Array([0x1D,0x6B,0x49, code.length]);
+    var barcodeData = enc.encode(code);
+    var barcodeTail = new Uint8Array([0x00, 0x1B,0x61,0x00, 0x0A,0x0A,0x0A]);
+    parts.push({teksBytes:teksBytes, setting:setting, barcodeHead:barcodeHead, barcodeData:barcodeData, barcodeTail:barcodeTail});
+    total += teksBytes.length + setting.length + barcodeHead.length + barcodeData.length + barcodeTail.length;
+  });
+  var out = new Uint8Array(total);
+  var p = 0;
+  out[p++]=0x1B; out[p++]=0x40;
+  parts.forEach(function(pt){
+    out.set(pt.teksBytes, p); p += pt.teksBytes.length;
+    out.set(pt.setting, p); p += pt.setting.length;
+    out.set(pt.barcodeHead, p); p += pt.barcodeHead.length;
+    out.set(pt.barcodeData, p); p += pt.barcodeData.length;
+    out.set(pt.barcodeTail, p); p += pt.barcodeTail.length;
+  });
+  return out;
+}
+
+async function kirimKePrinterFG(items, ulang){
+  if(!printerCharacteristic){
+    await autoSambungPrinter();
+  }
+  if(printerCharacteristic && printerDevice && printerDevice.gatt.connected){
+    try{
+      var bytes = buildPrintBytesFG(items, ulang);
+      for(var i=0;i<bytes.length;i+=20){
+        await printerCharacteristic.writeValueWithoutResponse(bytes.slice(i, i+20));
+        await new Promise(function(r){ setTimeout(r, 30); });
+      }
+      hMsg('Terkirim ke printer.', 'ok');
+      return;
+    }catch(e){
+      hMsg('Gagal print: ' + e.message + ' - Pilih printer lagi.', 'bad');
+      printerCharacteristic = null;
+      return;
+    }
+  }
+  if(navigator.bluetooth){
+    hMsg('Pilih printer dulu di tombol biru.', 'bad');
+    await pilihPrinter();
+    if(printerCharacteristic){ kirimKePrinterFG(items, ulang); }
+    return;
+  }
+  hCetakLabels(items, ulang);
+}
+
 function hCetak() {
   if (!hState) { hMsg('Belum ada data tersimpan.', 'bad'); return; }
-  hCetakLabels(hState.lines, false);
+  kirimKePrinterFG(hState.lines, false);
 }
 
 function hShareWa() {
@@ -877,7 +1010,7 @@ function hCariPalet() {
 function hCetakUlang(idx) {
   var it = hCache[idx];
   if (!it) return;
-  hCetakLabels([{ palet: it.palet, produk: it.namaProduk, qty: it.qty, gram: it.gram, tf: it.tf,
+  kirimKePrinterFG([{ palet: it.palet, produk: it.namaProduk, qty: it.qty, gram: it.gram, tf: it.tf,
                   tanggal: it.tanggal, jam: it.jam, shift: it.shift, nama: it.nama }], true);
 }
 
