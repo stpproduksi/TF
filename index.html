@@ -8,6 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="logo-favicon.png">
 <link rel="apple-touch-icon" href="logo-192.png">
 <meta name="theme-color" content="#1D4E89">
+<link href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&display=swap" rel="stylesheet">
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
@@ -15,9 +16,8 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <style>
-  body{ font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--ink); padding:18px; }
+  body{font-family:'Carlito', Calibri, Arial, sans-serif;background:#F3F4F6;margin:0;padding:12px;font-size:16px;color:#14181F}
   h1{font-size:17px;margin:4px 0 10px}
   nav{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px}
   nav button{padding:10px 14px;border:0;border-radius:8px;background:#1D4E89;color:#fff;font-size:14px;font-weight:bold;white-space:nowrap;opacity:.75}
@@ -112,6 +112,8 @@ if ('serviceWorker' in navigator) {
     <button class="btn g" id="tfSave" onclick="tfSimpan()">Simpan</button>
     <button class="btn wa" id="tfShare" onclick="tfShareWa()" disabled>Share WA</button>
     <button class="btn o" onclick="tfKosongkan()">Kosongkan Form</button>
+    <button class="btn o" style="margin-top:12px" onclick="tfTampilRiwayat()">Riwayat Simpan (Share Ulang)</button>
+    <div id="tfRiwayat" style="margin-top:8px"></div>
     <div id="tfMsg" style="margin-top:8px;font-size:13px"></div>
   </div>
 </section>
@@ -233,6 +235,7 @@ var TF_THERMO = ['Agung','Agus','Eka','Niko'];
 var HASIL_OPERATOR = ['Agus','Eka','Ido','Niko'];
 var PRODUK_LIST = [];
 var HASIL_KEY = 'thermoHasilSaved';
+var TF_RIWAYAT_KEY = 'thermoTfRiwayat';
 
 var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -340,9 +343,9 @@ function tfPilih(it) {
 function tfBukaScan() {
   $('scanModal').style.display = 'block';
   html5Qr = new Html5Qrcode('reader');
-  html5Qr.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } },
+  html5Qr.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 120 } },
     function (t) { tfTutupScan(); tfCari(String(t).trim()); }, function () {})
-    .catch(function (e) { $('scanModal').style.display = 'none'; tfMsg('Kamera gagal dibuka: ' + e, 'bad'); });
+    .catch(function (e) { $('scanModal').style.display = 'none'; html5Qr = null; tfMsg('Kamera gagal dibuka: ' + e, 'bad'); });
 }
 
 function tfTutupScan() {
@@ -373,6 +376,7 @@ function tfSimpan() {
   api({ action: 'save', payload: JSON.stringify(data) }).then(function (res) {
     if (res.ok) {
       tfLast = data;
+      tfRiwayatTambah(data);
       tfKunci(true);
       $('tfShare').disabled = false;
       tfMsg('✅ Tersimpan. Tekan Share WA, lalu Kosongkan Form.', 'ok');
@@ -381,21 +385,6 @@ function tfSimpan() {
       tfMsg('❌ Gagal: ' + (res.error || 'tidak diketahui'), 'bad');
     }
   }).catch(function (e) { $('tfSave').disabled = false; tfMsg('❌ Gagal: ' + e.message, 'bad'); });
-}
-
-function tfShareWa() {
-  if (!tfLast) { tfMsg('Simpan dulu', 'bad'); return; }
-  var d = tfLast;
-  var t = '✅ SHEET NAIK TF\n' +
-    'Tanggal: ' + tglIndo(d.tanggal) + ' | Jam TF: ' + d.jam + '\n' +
-    'Shift: ' + d.shift + ' | TF: ' + d.tf + '\n' +
-    'Carsheet: ' + d.carsheet + '\n' +
-    'Ukuran: ' + d.ukuran + '\n' +
-    'Berat: ' + d.berat + ' kg\n' +
-    'Ext: ' + d.ext + ' | Nama Ext: ' + d.namaExt + '\n' +
-    'Jam Input Ext: ' + d.jamExt + '\n' +
-    'KR Thermo: ' + d.namaThermo;
-  window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank');
 }
 
 function tfKosongkan() {
@@ -408,6 +397,53 @@ function tfKosongkan() {
   $('tfList').innerHTML = '';
   $('tfShare').disabled = true;
   tfMsg('Form dikosongkan. Scan carsheet untuk input berikutnya.', 'ok');
+}
+
+/* ===== RIWAYAT SIMPAN NAIK TF (Share Ulang) ===== */
+
+function tfRiwayatBaca() {
+  try { return JSON.parse(localStorage.getItem(TF_RIWAYAT_KEY) || '[]'); } catch (e) { return []; }
+}
+
+function tfRiwayatTambah(d) {
+  var list = tfRiwayatBaca();
+  list.unshift(d);
+  if (list.length > 30) list = list.slice(0, 30);
+  try { localStorage.setItem(TF_RIWAYAT_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
+function tfTeks(d) {
+  return '✅ SHEET NAIK TF\n' +
+    'Tanggal: ' + tglIndo(d.tanggal) + ' | Jam TF: ' + d.jam + '\n' +
+    'Shift: ' + d.shift + ' | TF: ' + d.tf + '\n' +
+    'Carsheet: ' + d.carsheet + '\n' +
+    'Ukuran: ' + d.ukuran + '\n' +
+    'Berat: ' + d.berat + ' kg\n' +
+    'Ext: ' + d.ext + ' | Nama Ext: ' + d.namaExt + '\n' +
+    'Jam Input Ext: ' + d.jamExt + '\n' +
+    'KR Thermo: ' + d.namaThermo;
+}
+
+function tfShareWa() {
+  if (!tfLast) { tfMsg('Belum ada data tersimpan. Pilih dari Riwayat Simpan.', 'bad'); return; }
+  window.open('https://wa.me/?text=' + encodeURIComponent(tfTeks(tfLast)), '_blank');
+}
+
+function tfShareRiwayat(idx) {
+  var d = tfRiwayatBaca()[idx];
+  if (!d) return;
+  window.open('https://wa.me/?text=' + encodeURIComponent(tfTeks(d)), '_blank');
+}
+
+function tfTampilRiwayat() {
+  var list = tfRiwayatBaca();
+  var box = $('tfRiwayat');
+  if (!list.length) { box.innerHTML = 'Belum ada riwayat.'; return; }
+  box.innerHTML = list.map(function (d, i) {
+    return '<div class="item"><b>' + esc(d.carsheet) + ' | ' + esc(d.ukuran) + ' | ' + esc(d.berat) + ' kg</b><br>' +
+      '<small>TF ' + esc(d.tf) + ' | ' + esc(d.tanggal) + ' ' + esc(d.jam) + ' | KR ' + esc(d.namaThermo) + '</small><br>' +
+      '<button class="btn wa" style="margin-top:6px" onclick="tfShareRiwayat(' + i + ')">Share WA</button></div>';
+  }).join('');
 }
 
 /* ===== RINCIAN NAIK TF (hanya membaca) ===== */
@@ -885,5 +921,6 @@ function hKosongkan() {
 window.onload = function () { $('pin').focus(); };
 </script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </body>
 </html>
