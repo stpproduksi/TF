@@ -487,10 +487,12 @@ function ltHtml(kr, grand, jumlah){
     var k=kr[n];
     var grp=Object.keys(k.grup).sort().map(function(g){
       var gr=k.grup[g];
-      return '<div style="margin-top:8px"><b>'+esc(g)+'&nbsp;&nbsp;&nbsp;'+fmtN(gr.total)+' kg</b></div>'+
-        gr.rows.map(function(it){ return '<div>'+esc(it.carsheet)+' | '+esc(it.ukuran)+' / '+fmtN(it.berat)+' kg</div>'; }).join('');
+      return '<div style="margin-top:8px;font-size:13px"><b>'+esc(g)+'&nbsp;&nbsp;&nbsp;'+fmtN(gr.total)+' kg</b></div>'+
+        gr.rows.map(function(it){
+          return '<div style="font-size:12.5px">'+esc(it.carsheet)+' | '+esc(it.ukuran)+' / '+fmtN(it.berat)+' kg | KR '+esc(it.thermo||'-')+'</div>';
+        }).join('');
     }).join('');
-    return '<div class="card" style="font-family:monospace">'+
+    return '<div class="card" style="font-family:monospace;font-size:13px">'+
       '<div style="font-size:15px;font-weight:bold">KR '+esc(n)+'</div>'+
       '<div style="font-weight:bold">TOTAL&nbsp;&nbsp;&nbsp;'+fmtN(k.total)+' kg</div>'+
       '<div style="font-size:12px;color:#5B6472">'+k.count+' carsheet</div>'+
